@@ -1,12 +1,15 @@
 # Sample processing of a JSon Data Stream
 
-Purpose: Emulation of the indexing of data coming from a blockchain.
+Purpose: Emulation of the indexing of data coming from a blockchain, e.g. account update events.
 
 Solana account updates are considered, being streamed continuously in a real time system.
 
+This project demonstrates possible ingestion & callback behaviors.
 
 
-## Dev Tasks
+## Tasks
+
+### Features support
 
 [ ] Create classes having appropriate encapsulation, attributes, and well deﬁned interfaces.
 
@@ -18,13 +21,27 @@ Solana account updates are considered, being streamed continuously in a real tim
 
 [ ] Display a callback log when an account’s `call_back_time_ms` has expired. 
 
-[ ] If the same account is ingested with a newer version number, and the old callback has not ﬁred yet, cancel the older version’s active callback. 
+  [ ] If the same account is ingested with a newer version number, and the old callback has not ﬁred yet, cancel the older version’s active callback. 
 
-[ ] Display a message when an old callback is canceled in favor of a new one
+  [ ] Display a message when an old callback is canceled in favor of a new one
 
-[ ] If an old version of the same account is ingested, ignore that update.
+  [ ] If an old version of the same account is ingested, ignore that update.
 
 [ ] Once all events and callbacks have completed, print the highest token-value accounts by AccountType (taking into account write version), and gracefully shut-down the system.
+
+### Project support
+
+1. A README ﬁle that contains:
+  * Instructions on how to run and test your code in a local environment through the
+command line.
+  * A description of how and why you chose the design patterns you did
+  * A description of what observability you would add if this was a production system.
+  What would you monitor for a production rollout?
+
+2. Production-ready code that:
+  * Follows community standard syntax and style
+  * Has no debug logging, TODOs, or FIXMEs
+  * Has test coverage to ensure quality and safety
 
 
 ## Info
@@ -62,3 +79,28 @@ version should be erased.
 
 `callbackTimeMs` - Time at which we’d like to print the contents of the account to console after it’s
 been ingested.
+
+
+### Example scenarios
+
+These scenarios only cover a single accountID, but demonstrate the expected ingestion / callback behaviors:
+
+#### Scenario 1 - Single Update
+
+0ms - simulation starts - ID1 scheduled to be ingested 550ms (0-1000ms random) later
+
+550ms - ID1 v1 is “ingested”, we print it as indexed
+
+950ms - ID1 v1 callback ﬁres (and we log with version 1)
+
+#### Scenario 2 - Updates with Cancellation
+
+0ms - simulation starts - ID1 scheduled to be ingested 550ms (0-1000ms random) later
+
+550ms - ID1 v1 is “ingested”, we print it as indexed
+
+650ms - ID1 v3 is “ingested”, print ID1 v3 indexed, cancel active ID1 v1 callback
+
+~~950ms - ID1 callback ﬁres (and we log with version 1)~~
+
+1050ms - ID1 v3 callback ﬁres
