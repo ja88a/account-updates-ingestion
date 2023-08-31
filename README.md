@@ -1,7 +1,10 @@
 # Sample processing of a JSon Data Stream
 
-Purpose: Emulation of the indexing of data coming from a blockchain. In
+Purpose: Emulation of the indexing of data coming from a blockchain.
+
 Solana account updates are considered, being streamed continuously in a real time system.
+
+
 
 ## Dev Tasks
 
@@ -15,11 +18,11 @@ Solana account updates are considered, being streamed continuously in a real tim
 
 [ ] Display a callback log when an account’s `call_back_time_ms` has expired. 
 
-    [ ] If the same account is ingested with a newer version number, and the old callback has not ﬁred yet, cancel the older version’s active callback. 
+[ ] If the same account is ingested with a newer version number, and the old callback has not ﬁred yet, cancel the older version’s active callback. 
 
-    [ ] Display a message when an old callback is canceled in favor of a new one
+[ ] Display a message when an old callback is canceled in favor of a new one
 
-    [ ] If an old version of the same account is ingested, ignore that update.
+[ ] If an old version of the same account is ingested, ignore that update.
 
 [ ] Once all events and callbacks have completed, print the highest token-value accounts by AccountType (taking into account write version), and gracefully shut-down the system.
 
@@ -46,19 +49,16 @@ Accounts' sample data set:
 
 Each account has the following information:
 
-`ID` - Unique identiﬁer of the account
+`id` - Unique identiﬁer of the account
 
-`AccountType` - Type of the account.
+`accountType` - Type of the account.
 
-`Data` - Data of the account. All accounts that share the same AccountType have the same data schema. This is the information in which clients are most interested in. You can assume these schemas are ﬁxed.
+`data` - Data of the account. All accounts that share the same AccountType have the same data schema. This is the information in which clients are most interested in. You can assume these schemas are ﬁxed.
 
-`Tokens` - Amount of tokens in the account.
+`tokens` - Amount of tokens in the account.
 
-`Version` - Version of the account on chain. If two updates for the same account come in, the old
+`version` - Version of the account on chain. If two updates for the same account come in, the old
 version should be erased.
 
-`CallbackTimeMs` - Time at which we’d like to print the contents of the account to console after it’s
+`callbackTimeMs` - Time at which we’d like to print the contents of the account to console after it’s
 been ingested.
-
-
- 
