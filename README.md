@@ -5,23 +5,23 @@ Solana account updates are considered, being streamed continuously in a real tim
 
 ## Dev Tasks
 
-[] Create classes having appropriate encapsulation, attributes, and well deﬁned interfaces.
+[ ] Create classes having appropriate encapsulation, attributes, and well deﬁned interfaces.
 
-[] Account updates' data are read asynchronously from a json ﬁle (Vs. a live continuous data stream)
+[ ] Account updates' data are read asynchronously from a json ﬁle (Vs. a live continuous data stream)
 
-[] Each account comes into the system at a continuous uniform (random) distribution between 0 and 1000ms
+[ ] Each account comes into the system at a continuous uniform (random) distribution between 0 and 1000ms
 
-[] Display a short message log message to console when each (accountId + version) tuple has been indexed.
+[ ] Display a short message log message to console when each (accountId + version) tuple has been indexed.
 
-[] Display a callback log when an account’s `call_back_time_ms` has expired. 
+[ ] Display a callback log when an account’s `call_back_time_ms` has expired. 
 
-    [] If the same account is ingested with a newer version number, and the old callback has not ﬁred yet, cancel the older version’s active callback. 
+    [ ] If the same account is ingested with a newer version number, and the old callback has not ﬁred yet, cancel the older version’s active callback. 
 
-    [] Display a message when an old callback is canceled in favor of a new one
+    [ ] Display a message when an old callback is canceled in favor of a new one
 
-    [] If an old version of the same account is ingested, ignore that update.
+    [ ] If an old version of the same account is ingested, ignore that update.
 
-[] Once all events and callbacks have completed, print the highest token-value accounts by AccountType (taking into account write version), and gracefully shut-down the system.
+[ ] Once all events and callbacks have completed, print the highest token-value accounts by AccountType (taking into account write version), and gracefully shut-down the system.
 
 
 ## Info
