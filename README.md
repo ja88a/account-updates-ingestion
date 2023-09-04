@@ -5,7 +5,7 @@ Purpose: Emulation of the indexing of data coming from a blockchain, e.g. accoun
 Solana account updates are considered, being streamed continuously in a real time system.
 
 This project demonstrates possible ingestion & callback behaviors.
-
+ 
 
 ## Tasks
 
