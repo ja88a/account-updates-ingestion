@@ -1,11 +1,45 @@
 # Sample processing of a JSon Data Stream
 
+## Description
+
 Purpose: Emulation of the indexing of data coming from a blockchain, e.g. account update events.
 
 Solana account updates are considered, being streamed continuously in a real time system.
 
-This project demonstrates possible ingestion & callback behaviors.
+This project demonstrates possible data ingestion & handling techniques.
 
+
+## Installation
+
+```bash
+$ pnpm install
+```
+
+## Running the app
+
+```bash
+# development
+$ pnpm start
+
+# watch mode
+$ pnpm start:dev
+
+# production mode
+$ pnpm start:prod
+```
+
+## Test
+
+```bash
+# unit tests
+$ pnpm test
+
+# e2e tests
+$ pnpm test:e2e
+
+# test coverage
+$ pnpm test:cov
+```
 
 ## Tasks
 
@@ -104,3 +138,7 @@ These scenarios only cover a single accountID, but demonstrate the expected inge
 ~~950ms - ID1 callback ﬁres (and we log with version 1)~~
 
 1050ms - ID1 v3 callback ﬁres
+
+## Supports
+
+**[Nest](https://github.com/nestjs/nest)** is used as the progressive [Node.js](https://nodejs.org) framework for building efficient and scalable server-side applications.
