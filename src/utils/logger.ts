@@ -27,7 +27,7 @@ const logger = createLogger({
 if (process.env.NODE_ENV !== EConfigRunMode.PROD) {
   const consoleFormat = format.printf(
     ({ timestamp, label, level, message }) => {
-      return `${timestamp} [${label}] ${level} ${message}`;
+      return `${timestamp} [${label}]\t${level}: ${message}`;
     },
   );
 
@@ -39,7 +39,7 @@ if (process.env.NODE_ENV !== EConfigRunMode.PROD) {
 
   logger.add(
     new transports.Console({
-      level: 'debug',
+      level: 'info',
       format: alignedWithColorsAndTime,
     }),
   );
