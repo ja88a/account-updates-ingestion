@@ -1,6 +1,7 @@
 import { ValidatorOptions } from 'class-validator';
 
-// TODO PROD enforce IO validation
+export const EXIT_ON_STOP = true;
+
 /**
  * Imported Data Validation options
  */
