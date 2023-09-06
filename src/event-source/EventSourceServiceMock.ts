@@ -1,19 +1,18 @@
 import { Injectable } from '@nestjs/common';
 import { IEventSourceService } from './IEventSourceService';
-import Logger from '../utils/logger';
 
+import { plainToInstance } from 'class-transformer';
+import { ValidationError } from 'class-validator';
 import {
-  classToPlain,
-  instanceToPlain,
-  plainToClass,
-  plainToInstance,
-} from 'class-transformer';
-import { validate, ValidationError } from 'class-validator';
-import { AccountUpdate, AccountUpdateList } from '../data/account-event.dto';
-import { VALID_OPT } from '../common/config';
+  AccountUpdate,
+  AccountUpdateList
+} from '../data/account-update.dto';
 
 import { EventEmitter } from 'node:events';
-import { MOCK_DATA_URL_DEFAULT, EventName } from './constants';
+import AService from '../common/service/AService';
+import { AccountUpdateValidator } from '../data/class-validator';
+import { EVENT_CASTING_MAX_INTERVAL_MS, EventName, MOCK_DATA_URL } from './constants';
+import { ServiceStatusEvent } from '../data/service.dto';
 
 /**
  * This service loads a set of logged onchain events, and validate them before
@@ -25,15 +24,14 @@ import { MOCK_DATA_URL_DEFAULT, EventName } from './constants';
  * * A data streaming is then emulated to randomly cast the events over time, sequentially
  * * Listeners having registered have their callback triggered for the Account Update events
  *
- * @implements IEventSourceService
+ * @see {@link IEventSourceService}
+ * @override {@link AService}
  */
 @Injectable()
-export class EventSourceServiceMock implements IEventSourceService {
-  /** Logger */
-  private readonly logger = Logger.child({
-    label: EventSourceServiceMock.name,
-  });
-
+export class EventSourceServiceMock
+  extends AService
+  implements IEventSourceService
+{
   /** A general events emitter to support the handling of new Account update Events */
   private eventEmitter: EventEmitter = new EventEmitter();
 
@@ -41,31 +39,19 @@ export class EventSourceServiceMock implements IEventSourceService {
   private eventCastingTimeout: NodeJS.Timeout | undefined;
 
   /** URL of the JSON file to be fetched for populating a sample data set (mock) */
-  private jsonMockFileUrl: string = MOCK_DATA_URL_DEFAULT;
+  private jsonMockFileUrl: string = MOCK_DATA_URL;
 
   /**
-   * Add a listener, a callback function, to handle the events of type `StreamEventName.OC_ACCOUNT_UPDATE`
-   * @param callback The listener's callback function responsible for handling the provided `AccountEvent`
+   * Set a new file URL as source of mock data
+   * @param newStaticJsonFileUrl URL to the JSON file, e.g. `https://whatever.com/account-update-logs.json`
    */
-  // addListenerToAccountEvents(callback: {
-  //   (event: AccountUpdate): Promise<void>;
-  // }) {
-  //   this.eventStream.on(
-  //     EventName.OC_ACCOUNT_UPDATE,
-  //     (data: AccountUpdate) => callback,
-  //   );
-  // }
-  addListenerToAccountEvents(
-    callback: {
-      (event: AccountUpdate): Promise<void>;
-    },
-    context: any,
-  ) {
-    this.eventEmitter.on(EventName.OC_ACCOUNT_UPDATE, (data: AccountUpdate) => {
-      callback.bind(context)(data);
-    });
+  setJsonMockFileUrl(newStaticJsonFileUrl: string) {
+    this.jsonMockFileUrl = newStaticJsonFileUrl;
   }
 
+  /**
+   * @see {@link IEventSourceService.registerListener}
+   */
   registerListener<T>(
     eventName: EventName,
     callback: { (data: T): Promise<void> },
@@ -77,14 +63,6 @@ export class EventSourceServiceMock implements IEventSourceService {
   }
 
   /**
-   * Set a new file URL as source of mock data
-   * @param newStaticJsonFileUrl URL to the JSON file, e.g. `https://whatever.com/account-update-logs.json`
-   */
-  setJsonMockFileUrl(newStaticJsonFileUrl: string) {
-    this.jsonMockFileUrl = newStaticJsonFileUrl;
-  }
-
-  /**
    * Load a data set of Account Updates logs by fetching it from a provided JSON file URI.
    *
    * Convert the loaded objects into a list of `AccountEvent` and validate their consistency/support.
@@ -92,8 +70,11 @@ export class EventSourceServiceMock implements IEventSourceService {
    * @param staticJsonFileUrl File URL used for fetching its JSON content
    * @returns The list of loaded `AccountEvent` and their associated validation errors, if any
    */
-  private async _loadAccountEventsFromUrl(staticJsonFileUrl: string) {
-    // Load
+  private async loadAccountEventsFromUrl(
+    staticJsonFileUrl: string,
+    validate: boolean | undefined = false,
+  ) {
+    // Fetch JSON
     const resp = await fetch(staticJsonFileUrl);
     if (!resp.ok) {
       throw new Error(
@@ -110,7 +91,8 @@ export class EventSourceServiceMock implements IEventSourceService {
 
     // Validate
     let validationErr: ValidationError[] = [];
-    validationErr = await this.validateAll(eventLogs.list);
+    if (validate)
+      validationErr = await AccountUpdateValidator.validateAll(eventLogs.list);
 
     return {
       events: eventLogs.list,
@@ -119,63 +101,19 @@ export class EventSourceServiceMock implements IEventSourceService {
   }
 
   /**
-   * Validate a account update event and provide fields & values validation errors if any
-   * @param eventLog the account update event to validate
-   * @return List of validation errors, if any. Else an empty array.
+   * Here we don't monitor an external data source of real-time events,
+   * instead we load a static JSON data set of Account Updates and cast them
+   * individually & sequentially for emulating an event casting system.
+   *
+   * @see {@link IEventSourceService.startMonitoringEvents}
    */
-  async validate(eventLog: AccountUpdate): Promise<ValidationError[]> {
-    const validationErr: ValidationError[] = await validate(
-      eventLog,
-      VALID_OPT,
-    ).catch((error) => {
-      throw new Error(
-        `Failed to validate the account update event ${eventLog.id} ${eventLog.accountType} v${eventLog.version} \n${error}`,
-      );
-    });
-
-    if (validationErr.length > 0) {
-      this.logger.warn(
-        `Validation of event ${eventLog.id}_${eventLog.accountType}_v${eventLog.version} results in ${validationErr.length} issue(s): \n${validationErr}`,
-      );
-    }
-    return validationErr;
-  }
-
-  /**
-   * Validate a list of logged onchain events (fields & values validation issues)
-   * @param eventLogs the list of account events to validate
-   * @return List of validation errors, if any. Else an empty array.
-   */
-  async validateAll(eventLogs: AccountUpdate[]): Promise<ValidationError[]> {
-    let validationErr: ValidationError[] = [];
-    for (let i = 0; i < eventLogs.length; i++) {
-      await this.validate(eventLogs[i])
-        .then((validErr) => {
-          validationErr = validationErr.concat(validErr);
-        })
-        .catch((error) => {
-          throw new Error(
-            `Batch validation of ${eventLogs.length} account update events aborted at index ${i} \n${error}`,
-          );
-        });
-    }
-
-    if (validationErr.length > 0) {
-      this.logger.warn(
-        `Validation of ${eventLogs.length} events resulted in ${validationErr.length} issue(s)`,
-      );
-    }
-    return validationErr;
-  }
-
   async startMonitoringEvents(): Promise<void> {
     // Load the data sets of Account Events
-    await this._loadAccountEventsFromUrl(this.jsonMockFileUrl)
+    await this.loadAccountEventsFromUrl(this.jsonMockFileUrl)
       .then((results) => {
         this.logger.info(
           `${results.events.length} account updates available for casting`,
         );
-
         // Start casting the events to emulate their real-time streaming
         this.castAccountEvents(results.events.reverse());
       })
@@ -196,20 +134,23 @@ export class EventSourceServiceMock implements IEventSourceService {
   private castAccountEvents(accountEvents: AccountUpdate[]) {
     if (!accountEvents)
       throw new Error(`No Account Events provided for casting `);
+
     if (accountEvents.length == 0) {
       this.eventCastingTimeout = undefined;
-      this.logger.info(`Events casting done`);
+      this.logger.warn(
+        `Casting of Account Update Events is OVER - no more left`,
+      );
+      const statusEvt: ServiceStatusEvent = {
+        source: this.constructor.name,
+        active: false,
+        leftover: 0,
+      };
+      this.eventEmitter.emit(EventName.SERVICE_UPDATE, statusEvt);
       return;
     }
 
-    this.logger.debug(
-      `Casting event ${accountEvents[accountEvents.length - 1].id}_${
-        accountEvents[accountEvents.length - 1].accountType
-      }_v${accountEvents[accountEvents.length - 1].version}`,
-    );
-
     // Generate a random number (integer) within the range [0; 1000]
-    const timeoutMs = Math.floor(Math.random() * 1001);
+    const timeoutMs = Math.floor(Math.random() * EVENT_CASTING_MAX_INTERVAL_MS+1);
 
     // Emit an event, remove the cast one from the FIFO & loop back to send next event sequentually
     this.eventCastingTimeout = setTimeout(() => {
@@ -225,18 +166,19 @@ export class EventSourceServiceMock implements IEventSourceService {
    * Emit an account update event to the stream for listeners's callback to handle it
    * @param data The `data.AccountEvent` dataset to provide to listeners
    */
-  private emitAccountEvent(data: AccountUpdate) {
+  private emitAccountEvent(data: AccountUpdate): boolean {
     const result = this.eventEmitter.emit(EventName.OC_ACCOUNT_UPDATE, data);
     if (!result)
       this.logger.warn(
         `No listeners found for events '${EventName.OC_ACCOUNT_UPDATE}'`,
       );
+    return result;
   }
 
   /**
    * Remove all listeners of the events emitter and stop casting new events
    */
-  private _stopEventsHandling() {
+  private stopEmittingEvents() {
     if (this.eventEmitter) this.eventEmitter.removeAllListeners();
     if (this.eventCastingTimeout) {
       clearTimeout(this.eventCastingTimeout);
@@ -244,13 +186,11 @@ export class EventSourceServiceMock implements IEventSourceService {
     }
   }
 
-  init(): boolean {
-    this.logger.info('Initializing the service');
-    return true;
-  }
-
+  /**
+   * @override {@link AService.shutdown}
+   */
   shutdown(signal: string): void {
-    this.logger.info('Shutting down the service on Signal: ' + signal);
-    this._stopEventsHandling();
+    super.shutdown(signal);
+    this.stopEmittingEvents();
   }
 }
