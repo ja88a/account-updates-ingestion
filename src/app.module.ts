@@ -1,11 +1,12 @@
 import { Module } from '@nestjs/common';
+import { ServeStaticModule } from '@nestjs/serve-static';
+import { join } from 'path';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { ServeStaticModule } from '@nestjs/serve-static';
-import { EventSourceServiceMock as EventSourceService } from './event-source/EventSourceServiceMock';
+import { AccountHandlerCallback } from './event-handler/AccountHandlerCallback';
+import { AccountHandlerTokenLeaders } from './event-handler/AccountHandlerTokenLeaders';
 import { EventIngestorService } from './event-ingestor/EventIngestorService';
-import { EventHandlerService } from './event-handler/EventHandlerService';
-import { join } from 'path';
+import { EventSourceServiceMock as EventSourceService } from './event-source/EventSourceServiceMock';
 
 @Module({
   imports: [
@@ -18,7 +19,8 @@ import { join } from 'path';
     AppService,
     EventSourceService,
     EventIngestorService,
-    EventHandlerService,
+    AccountHandlerCallback,
+    AccountHandlerTokenLeaders,
   ],
 })
 export class AppModule {}

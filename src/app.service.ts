@@ -7,21 +7,23 @@ export class AppService {
   private readonly logger = Logger.child({
     label: AppService.name,
   });
-  
-  /** 
+
+  /**
    * Provides a static HTML content
    */
   getHtmlWelcome(): string {
-    return 'Hello World!';
+    return '<html><body style="font-family:sans-serif;color:white;background-color:black;">' +
+      '<h2>Cheers ME!</h2><h3>BR from EU</h3>'+
+      '<img src="/arch-overview_diag01t.png"/></body></html>';
   }
 
-  /** 
+  /**
    * Initialization of the module.
-   * 
+   *
    * Throws an Error exception if an issue is met
    */
   async init(): Promise<void> {
-    this.logger.debug("Starting initialization");
+    this.logger.debug('Initializing the service');
   }
 
   /**
@@ -29,7 +31,6 @@ export class AppService {
    * @param signal Signal at the origin of this service shutdown, e.g. `SIGINT`
    */
   async shutdown(signal: string) {
-    this.logger.info('Shutting down the App main service on signal ' + signal);
+    this.logger.debug('Shutting down the App main service on signal ' + signal);
   }
-
 }
