@@ -1,7 +1,8 @@
-import { IService } from './IService';
-import Logger from '../../utils/logger';
+import { ValidationError } from 'class-validator';
 import { AccountUpdate } from '../../data/account-update.dto';
 import { AccountUpdateValidator } from '../../data/class-validator';
+import Logger from '../../utils/logger';
+import { IService } from './IService';
 
 /**
  * Common & generic properties & methods for Services
@@ -18,16 +19,16 @@ abstract class AService implements IService {
    * @param accountUpd the account update data set to be validated
    * @see {@link AccountUpdate} to review the applied Code-as-Schema
    */
-  async validateAccountUpdate(accountUpd: AccountUpdate) {
+  async validateAccountUpdate(accountUpd: AccountUpdate): Promise<ValidationError[]> {
     if (accountUpd == undefined)
       throw new Error(`Unprocessable Account Update event: undefined`);
     const validErrors = await AccountUpdateValidator.validate(accountUpd);
     if (validErrors.length > 0) {
       this.logger.warn(
-        `Ignoring the non-supported Account Update ${accountUpd.id} v${accountUpd.version}\n${validErrors}`,
+        `Invalid Account Update ${accountUpd.id} v${accountUpd.version}\n${validErrors}`,
       );
-      return;
     }
+    return validErrors;
   }
 
   /** @see {@link IService.init} */

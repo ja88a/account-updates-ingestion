@@ -6,7 +6,7 @@ import { AccountToken, AccountTypeTokenOwners } from '../data/service.dto';
 
 /** Max number of leaders (account with max tokens) to keep track of, per account type */
 const LEADERBOARD_SIZE = 3;
-const LEADERBOARD_BUFFER = 2;
+const LEADERBOARD_SIZE_BUFFER = 2;
 
 /**
  * Manages a leaderboard of updated accounts having the max number of tokens,
@@ -28,7 +28,11 @@ export class AccountHandlerTokenLeaders
    */
   async processAccountUpdate(accountUpd: AccountUpdate): Promise<boolean> {
     // Check inputs
-    await this.validateAccountUpdate(accountUpd);
+    const issues = await this.validateAccountUpdate(accountUpd);
+    if (issues.length > 0) {
+      this.logger.warn(`Ignoring ${accountUpd.id} v${accountUpd.version} - Not processing`);
+      return false;
+    }
 
     const accountId = accountUpd.id;
     const accountType = accountUpd.accountType;
@@ -59,7 +63,7 @@ export class AccountHandlerTokenLeaders
     }
 
     // Lack of particpants
-    if (accountTypeLeaders.length < LEADERBOARD_SIZE + LEADERBOARD_BUFFER) {
+    if (accountTypeLeaders.length < LEADERBOARD_SIZE + LEADERBOARD_SIZE_BUFFER) {
       this.insertLeader(
         { id: accountId, tokens: accountTokens },
         accountTypeLeaders,
@@ -80,6 +84,12 @@ export class AccountHandlerTokenLeaders
     return recorded;
   }
 
+  /**
+   * Insert a new entry in the leaderboard: push new record, descending sorting, maintain array max length
+   * @param accountToken 
+   * @param accountTypeLeaders 
+   * @returns 
+   */
   insertLeader(
     accountToken: AccountToken,
     accountTypeLeaders: AccountToken[],
@@ -88,7 +98,7 @@ export class AccountHandlerTokenLeaders
     accountTypeLeaders.sort((a, b) =>
       a.tokens < b.tokens ? 1 : a.tokens > b.tokens ? -1 : 0,
     );
-    if (accountTypeLeaders.length > LEADERBOARD_SIZE + LEADERBOARD_BUFFER)
+    if (accountTypeLeaders.length > LEADERBOARD_SIZE + LEADERBOARD_SIZE_BUFFER)
       accountTypeLeaders.pop();
     return accountTypeLeaders;
   }
