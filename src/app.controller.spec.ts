@@ -1,22 +1,39 @@
+import { ServeStaticModule } from '@nestjs/serve-static';
 import { Test, TestingModule } from '@nestjs/testing';
+import { join } from 'path';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { AccountHandlerCallback } from './event-handler/AccountHandlerCallback';
+import { AccountHandlerTokenLeaders } from './event-handler/AccountHandlerTokenLeaders';
+import { EventIngestorService } from './event-ingestor/EventIngestorService';
+import { EventSourceServiceMock } from './event-source/EventSourceServiceMock';
 
 describe('AppController', () => {
   let appController: AppController;
 
   beforeEach(async () => {
     const app: TestingModule = await Test.createTestingModule({
+      imports: [
+        ServeStaticModule.forRoot({
+          rootPath: join(__dirname, '..', 'static'),
+        }),
+      ],
       controllers: [AppController],
-      providers: [AppService],
+      providers: [
+        AppService,
+        EventSourceServiceMock,
+        EventIngestorService,
+        AccountHandlerCallback,
+        AccountHandlerTokenLeaders,
+      ],
     }).compile();
 
     appController = app.get<AppController>(AppController);
   });
 
-  describe('root', () => {
-    it('should return "Hello World!"', () => {
-      expect(appController.getStaticWelcome()).toBe('Hello World!');
+  describe('/ping', () => {
+    it('should return "true"', () => {
+      expect(appController.getPing()).toBe<boolean>(true);
     });
   });
 });
