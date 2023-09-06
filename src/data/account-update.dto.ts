@@ -1,16 +1,16 @@
 import { Type } from 'class-transformer';
 import {
-  IsEnum,
-  IsDefined,
-  IsOptional,
-  ValidateNested,
-  IsNumber,
-  IsInt,
+  IsAlphanumeric,
   IsArray,
-  Min,
+  IsDefined,
+  IsEnum,
+  IsInt,
+  IsNumber,
+  IsOptional,
   MaxLength,
+  Min,
   MinLength,
-  IsBoolean,
+  ValidateNested,
 } from 'class-validator';
 
 /** Supported Account Types */
@@ -55,6 +55,7 @@ export class AccountUpdateData {
 export class AccountUpdate {
   /** Unique identiﬁer of the account */
   @IsDefined()
+  @IsAlphanumeric()
   @MinLength(40)
   @MaxLength(50)
   id!: string;

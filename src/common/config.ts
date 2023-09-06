@@ -1,5 +1,6 @@
 import { ValidatorOptions } from 'class-validator';
 
+/** Specify if the server app should automatically shutdown by default, when the service gets inactive */
 export const EXIT_ON_STOP = true;
 
 /**
@@ -7,16 +8,15 @@ export const EXIT_ON_STOP = true;
  */
 export const VALID_OPT: ValidatorOptions = {
   skipMissingProperties: false,
-  forbidUnknownValues: true, // PROD set valid_opts forbidUnknownValues to `true`
-  whitelist: true, // PROD set valid_opts whilelist to `true`
+  forbidUnknownValues: true,
+  whitelist: true,
   forbidNonWhitelisted: true,
-  //groups: string[],
   dismissDefaultMessages: false,
   validationError: {
     target: true,
     value: true,
   },
-  stopAtFirstError: false, // PROD set to true to avoid wasting time
+  stopAtFirstError: false,
 };
 
 /**

@@ -156,7 +156,7 @@ export class AppController {
         entry.accounts[0].id
       }\t${entry.accounts[0].tokens} tokens\n`;
     });
-    this.logger.info(`Biggest token owners, per account type:\n${textReport}`);
+    this.logger.info(`Max tokens owner, per account type:\n${textReport}`);
 
     if (shutdown) this.onApplicationShutdown('DONE');
   }
