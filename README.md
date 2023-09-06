@@ -45,23 +45,23 @@ $ pnpm test:cov
 
 ### Features support
 
-[ ] Create classes having appropriate encapsulation, attributes, and well deﬁned interfaces.
+- [x] Create classes having appropriate encapsulation, attributes, and well deﬁned interfaces.
 
-[ ] Account updates' data are read asynchronously from a json ﬁle (Vs. a live continuous data stream)
+- [x] Account updates' data are read asynchronously from a json ﬁle (Vs. a live continuous data stream)
 
-[ ] Each account comes into the system at a continuous uniform (random) distribution between 0 and 1000ms
+- [x] Each account comes into the system at a continuous uniform (random) distribution between 0 and 1000ms
 
-[ ] Display a short message log message to console when each (accountId + version) tuple has been indexed.
+- [x] Display a short message log message to console when each (accountId + version) tuple has been indexed.
 
-[ ] Display a callback log when an account’s `call_back_time_ms` has expired. 
+  - [x] If an old version of the same account is ingested, ignore that update.
 
-  [ ] If the same account is ingested with a newer version number, and the old callback has not ﬁred yet, cancel the older version’s active callback. 
+- [x] Display a callback log when an account’s `call_back_time_ms` has expired. 
 
-  [ ] Display a message when an old callback is canceled in favor of a new one
+  - [x] If the same account is ingested with a newer version number, and the old callback has not ﬁred yet, cancel the older version’s active callback. 
 
-  [ ] If an old version of the same account is ingested, ignore that update.
+  - [x] Display a message when an old callback is canceled in favor of a new one
 
-[ ] Once all events and callbacks have completed, print the highest token-value accounts by AccountType (taking into account write version), and gracefully shut-down the system.
+- [x] Once all events and callbacks have completed, print the highest token-value accounts by AccountType (taking into account the right version), and gracefully shut-down the system.
 
 ### Project support
 
