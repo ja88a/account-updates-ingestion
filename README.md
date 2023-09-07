@@ -1,24 +1,30 @@
-# Sample processing of a JSon Data Stream
+# Ingestion and Handling of live on-chain events
 
 ## Description
 
-Purpose: Emulation of the indexing of data coming from a blockchain, e.g. account update events.
+Purpose: Simulation of the casting, ingestion & handling of accounts' update events issued by a blockchain.
 
 Solana account updates are considered, being streamed continuously in a real time system. In the context of this project, the casting of logged account updates is
-emulated: a static JSON file is loaded (made of +100 entries) and their cast is made sequentially, based on a random time interval.
+emulated: a static JSON file is loaded (made of +100 entries) and their casting is made sequentially, based on a random time interval.
 
-This project demonstrates possible techniques for ingesting data & handling their further processing.
+This project demonstrates possible techniques for ingesting data & handling their further processing. Moreover it emphasizes on good software development practices, in terms of tooling, architecture and functionnal design to address a production-ready service.
 
 ## Tech requirements
 
-The `pnpm` packet manager for Node.js is used, however it can be replaced by `yarn`.
+The [pnpm](https://pnpm.io/) package manager for Node.js is used & recommended, however it can be replaced by [yarn](https://yarnpkg.com/).
 
-You can install `pnpm` using:
+You can install `pnpm` with the command:
 ```bash
+# Package installation
 $ npm install --global pnpm
+
+# OS integration
+$ pnpm setup
 ```
 
-This project has been developped using Node.js LTS version `18.17`.
+This project has been developped using the [Node.js](https://nodejs.org) LTS version `18.17`.
+
+Commit hooks are implemented using [husky](https://typicode.github.io/husky/). They lint, format & test the code automatically prior to actually committing.
 
 ## Installation
 
@@ -93,7 +99,7 @@ One main application module has been considered on top of 3 main types of servic
 
 3. Service **Events Ingestor**: A service registering its event-specific callback(s) to a data source handler to ingest imported events data.
 
-    Actual implementation has an handler specific to events of type 'account updates', emitted by the data source handler, in order to ingest them.
+    Actual implementation has a handler specific to events of type 'account updates', emitted by the data source handler, in order to ingest them.
 
     Events data are validated, ignored if considered as invalid (missing or unknown field or value) and then indexed in memory, while a remote persistent storage might be considered. Once an account update is ingested, the registered handlers for account updates have their dedicated callback triggered.
 
@@ -107,13 +113,13 @@ One main application module has been considered on top of 3 main types of servic
 
     2 implementations of this service type are available:
     * one dedicated to triggering callbacks, which expiration time is expressed by the Account Update events
-    * another is dedicated to maintaining a minimum leaderboard of the accounts owning the most tokens, grouped per account types
+    * another is dedicated to maintaining a minimum leaderboard/tracking of the accounts owning the most tokens, grouped per account types
 
     Service interface: [IEventHandlerService](./src/event-handler/IEventHandlerService.ts)
     
     Account Update Handler for Callbacks: [AccountHandlerCallback](./src/event-handler/AccountHandlerCallback.ts)
         
-    Account Update Handler for tracking accounts' tokens holding: [AccountHandlerTokenLeaders](./src/event-handler/AccountHandlerTokenLeaders.ts)
+    Account Update Handler for tracking accounts' max tokens holding: [AccountHandlerTokenLeaders](./src/event-handler/AccountHandlerTokenLeaders.ts)
 
 
 ### Design patterns
@@ -123,14 +129,14 @@ The general adopted pattern is a controller-services approach for this simple ap
 The project structure allows setting clear boundaries among each components scope and dependencies. Moreover extracting the actual 4 services into separate and autonomous full modules (having their own controller, exposed RPC API, etc) is made easily possible.
 
 #### Service binding
-To lower done the dependency among services, they don't communicate directly to each other. Instead the listeners callback are registered to the triggerer. This binding of services (handler's callback registration) is performed by the app controller. 2 mains types have been implemented:
+To lower down the dependency among services, they don't communicate directly to each other. Instead the listeners callback are registered to the triggerer. This binding of services (handler's callback registration) is performed by the app controller. 2 mains types have been implemented:
 * EventEmitter-based technique for Ingestors to register their callback to be given for a given event-name
 * Interface method direct registration for Events handlers callback to be triggered by event-compatible Ingestor services
 
 Refer to the operated bindings in [AppController.bindServices()](./src/app.controller.ts).
 
 #### Delaying
-In order to schedule/delay an action (e.g. casting next account update event) or to way for a state (e.g. wait for all callbacks to be triggered before shutting down) a simple Node.js based Timeout technique is used.
+In order to schedule/delay an async action (e.g. casting next account update event) or to wait for a given state (e.g. wait for all callbacks to be triggered before shutting down) a Node-based Timeout technique is used.
 
 #### Validating
 A Code-as-Schema approach has been opted to validate and filter out problematic account update events. The implemented technique is based on [class-validator](https://www.npmjs.com/package/class-validator). Fields and values are checked per the constrained implemented for example in [account-update.dto.ts](./src/data/account-update.dto.ts).
@@ -148,7 +154,7 @@ The testing framework is made of the [Jest.js](https://jestjs.io) & [Chai](https
 
 ### Production Considerations
 
-The integrated Logging technique is based on the production-grade flexible [Winston Logger](https://www.npmjs.com/package/winston). In production mode (`NODE_ENV=prod`) the console output is disabled and logs are aggregated in a JSON file, with the provided log level thresholds. The later enables a log watcher service such as Kibana or LogWatcher to integrate these logs and define filters and alerts for a continuous monitoring. 
+The integrated Logging technique is based on the production-grade flexible [Winston Logger](https://www.npmjs.com/package/winston). In production mode (`NODE_ENV=production`) the console output is disabled and logs are aggregated in a JSON file, with the provided log level thresholds. The later enables a log watcher service such as Kibana or LogWatcher to integrate these logs and define filters and alerts for a continuous monitoring. 
 *Note*: A file rollout mechanism based on the file size or content length must be implemented on the network file system.
 
 As long as there is no external data persistency, current implementation stored all data in memory. This is problematic for the current account update events' ingestion service since it keeps in memory an entry for every met account. This is not scalable on a real system. Other services have limited states storage in memory, those are temporary (callback handler service) and/or limited (tokens leaderboard).
@@ -256,6 +262,6 @@ These scenarios only cover a single accountID, but demonstrate the expected inge
 
 1050ms - ID1 v3 callback ﬁres
 
-## Supports
+## Credits
 
 **[Nest](https://github.com/nestjs/nest)** is used as the progressive [Node.js](https://nodejs.org) framework for building efficient and scalable server-side applications.
