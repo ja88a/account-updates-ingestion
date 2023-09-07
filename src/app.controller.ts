@@ -6,7 +6,7 @@ import {
   EventSourceServiceMock as EventSourceService,
   EventSourceServiceMock,
 } from './event-source/EventSourceServiceMock';
-import { EventIngestorService } from './event-ingestor/EventIngestorService';
+import { AccountUpdateIngestor } from './event-ingestor/AccountUpdateIngestor';
 import { AccountHandlerCallback } from './event-handler/AccountHandlerCallback';
 import { exit } from 'process';
 import { EventName } from './event-source/constants';
@@ -24,7 +24,7 @@ export class AppController {
   constructor(
     private readonly appService: AppService,
     private readonly eventSource: EventSourceService,
-    private readonly eventIngestor: EventIngestorService,
+    private readonly eventIngestor: AccountUpdateIngestor,
     private readonly eventHandlerCallback: AccountHandlerCallback,
     private readonly eventHandlerLeader: AccountHandlerTokenLeaders,
   ) {}

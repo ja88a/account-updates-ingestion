@@ -5,7 +5,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AccountHandlerCallback } from './event-handler/AccountHandlerCallback';
 import { AccountHandlerTokenLeaders } from './event-handler/AccountHandlerTokenLeaders';
-import { EventIngestorService } from './event-ingestor/EventIngestorService';
+import { AccountUpdateIngestor } from './event-ingestor/AccountUpdateIngestor';
 import { EventSourceServiceMock as EventSourceService } from './event-source/EventSourceServiceMock';
 
 @Module({
@@ -18,7 +18,7 @@ import { EventSourceServiceMock as EventSourceService } from './event-source/Eve
   providers: [
     AppService,
     EventSourceService,
-    EventIngestorService,
+    AccountUpdateIngestor,
     AccountHandlerCallback,
     AccountHandlerTokenLeaders,
   ],

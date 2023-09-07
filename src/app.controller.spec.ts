@@ -5,7 +5,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AccountHandlerCallback } from './event-handler/AccountHandlerCallback';
 import { AccountHandlerTokenLeaders } from './event-handler/AccountHandlerTokenLeaders';
-import { EventIngestorService } from './event-ingestor/EventIngestorService';
+import { AccountUpdateIngestor } from './event-ingestor/AccountUpdateIngestor';
 import { EventSourceServiceMock } from './event-source/EventSourceServiceMock';
 
 describe('AppController', () => {
@@ -22,7 +22,7 @@ describe('AppController', () => {
       providers: [
         AppService,
         EventSourceServiceMock,
-        EventIngestorService,
+        AccountUpdateIngestor,
         AccountHandlerCallback,
         AccountHandlerTokenLeaders,
       ],
