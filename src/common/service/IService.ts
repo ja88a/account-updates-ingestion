@@ -4,13 +4,13 @@
 export interface IService {
   /**
    * Initialization method used for managing the service lifecycle
-   * @returns Promise<void>
+   * @returns A simple confirmation that init is successful, or not
    */
   init(): boolean;
 
   /**
    * Shutdown method used for managing the service lifecycle
-   * @param signal Signal code used for
+   * @param signal Signal code used for interrupting the running session
    */
   shutdown(signal: string): void;
 }
