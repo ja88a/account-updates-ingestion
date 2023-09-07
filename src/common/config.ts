@@ -23,7 +23,7 @@ export const VALID_OPT: ValidatorOptions = {
  * Supported run modes
  */
 export enum EConfigRunMode {
-  PROD = 'prod',
+  PROD = 'production',
   DEV = 'dev',
   default = PROD,
 }
