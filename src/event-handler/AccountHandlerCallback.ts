@@ -13,7 +13,7 @@ export class AccountHandlerCallback
   extends AService
   implements IEventHandlerService
 {
-  /** Record table of the account updates' still active callback and 
+  /** Record table of the account updates' still active callback and
    * the mean to cancel their scheduling */
   private callbackTimeout: Map<string, NodeJS.Timeout> = new Map();
 
@@ -30,7 +30,9 @@ export class AccountHandlerCallback
     // Check inputs
     const issues = await this.validateAccountUpdate(accountUpd);
     if (issues.length > 0) {
-      this.logger.warn(`Ignoring ${accountUpd.id} v${accountUpd.version} - Not processing`);
+      this.logger.warn(
+        `Ignoring ${accountUpd.id} v${accountUpd.version} - Not processing`,
+      );
       return false;
     }
 

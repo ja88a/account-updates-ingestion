@@ -1,4 +1,4 @@
-/** 
+/**
  * Interface of any services
  */
 export interface IService {

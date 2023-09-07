@@ -8,9 +8,7 @@ describe('AppController (e2e)', () => {
 
   beforeEach(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [
-        AppModule
-      ],
+      imports: [AppModule],
     }).compile();
 
     app = moduleFixture.createNestApplication();
@@ -18,9 +16,6 @@ describe('AppController (e2e)', () => {
   });
 
   it('/ping (GET)', () => {
-    return request(app.getHttpServer())
-      .get('/ping')
-      .expect(200)
-      .expect('true');
+    return request(app.getHttpServer()).get('/ping').expect(200).expect('true');
   });
 });

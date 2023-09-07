@@ -21,11 +21,11 @@ export enum AccountType {
   AUCTION = 'auction',
   AUCTION_DATA = 'auctionData',
   MASTER_EDITION = 'masterEdition',
-  ESCROW = 'escrow'
+  ESCROW = 'escrow',
 }
 
-/** 
- * Data of Account Updates 
+/**
+ * Data of Account Updates
  */
 export class AccountUpdateData {
   @IsOptional()

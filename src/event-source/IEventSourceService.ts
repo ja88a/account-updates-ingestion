@@ -6,7 +6,7 @@ import { IService } from '../common/service/IService';
  */
 export interface IEventSourceService extends IService {
   /**
-   * Register a listener's callback function to handle events matching the provided name, and for which 
+   * Register a listener's callback function to handle events matching the provided name, and for which
    * the event payload is made of only 1 argument (data object)
    * @param eventName The events name to filter when the callback should be triggered
    * @param callback The method handling the provided event data type
@@ -21,9 +21,9 @@ export interface IEventSourceService extends IService {
   /**
    * Start the monitoring process of externally emitted events.
    *
-   * Note: For the reported events to be handled/caught, corresponding listeners must have 
+   * Note: For the reported events to be handled/caught, corresponding listeners must have
    * registered their callback method. Refer to {@link IEventSourceService.registerListener}
-   * 
+   *
    * @returns Nothing is returned but a Promise for possible chaining
    */
   startMonitoringEvents(): Promise<void>;

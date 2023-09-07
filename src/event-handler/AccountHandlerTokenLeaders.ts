@@ -30,7 +30,9 @@ export class AccountHandlerTokenLeaders
     // Check inputs
     const issues = await this.validateAccountUpdate(accountUpd);
     if (issues.length > 0) {
-      this.logger.warn(`Ignoring ${accountUpd.id} v${accountUpd.version} - Not processing`);
+      this.logger.warn(
+        `Ignoring ${accountUpd.id} v${accountUpd.version} - Not processing`,
+      );
       return false;
     }
 
@@ -46,7 +48,7 @@ export class AccountHandlerTokenLeaders
     } else {
       // Check if not already part of the leaderboard, if so, update it
       for (let i = 0; i < accountTypeLeaders.length; i++) {
-        let entry = accountTypeLeaders[i];
+        const entry = accountTypeLeaders[i];
         if (accountId == entry.id) {
           entry.tokens = accountTokens;
           recorded = true;
@@ -63,7 +65,10 @@ export class AccountHandlerTokenLeaders
     }
 
     // Lack of particpants
-    if (accountTypeLeaders.length < LEADERBOARD_SIZE + LEADERBOARD_SIZE_BUFFER) {
+    if (
+      accountTypeLeaders.length <
+      LEADERBOARD_SIZE + LEADERBOARD_SIZE_BUFFER
+    ) {
       this.insertLeader(
         { id: accountId, tokens: accountTokens },
         accountTypeLeaders,
@@ -86,9 +91,9 @@ export class AccountHandlerTokenLeaders
 
   /**
    * Insert a new entry in the leaderboard: push new record, descending sorting, maintain array max length
-   * @param accountToken 
-   * @param accountTypeLeaders 
-   * @returns 
+   * @param accountToken
+   * @param accountTypeLeaders
+   * @returns
    */
   insertLeader(
     accountToken: AccountToken,
@@ -108,8 +113,8 @@ export class AccountHandlerTokenLeaders
    * @returns `{ [accountTypeName]: Array<{id: string, tokens: number}> }` with the array entries sorted per the number of hold tokens
    */
   reportLeaderboard(): any {
-    let accountTypeTokenTopOwners = {};
-    for (let entry of this.accountTypeAccountToken.entries()) {
+    const accountTypeTokenTopOwners = {};
+    for (const entry of this.accountTypeAccountToken.entries()) {
       Object.assign(accountTypeTokenTopOwners, {
         [entry[0]]: entry[1],
       });
@@ -122,15 +127,15 @@ export class AccountHandlerTokenLeaders
    * @returns `Array<{ type: string, accounts: Array<{id: string, tokens: number}> }>`
    */
   reportStatus(): AccountTypeTokenOwners[] {
-    let accountTypeTokenTopOwners: AccountTypeTokenOwners[] = [];
-    for (let entry of this.accountTypeAccountToken.entries()) {
+    const accountTypeTokenTopOwners: AccountTypeTokenOwners[] = [];
+    for (const entry of this.accountTypeAccountToken.entries()) {
       const newEntry = {
         type: entry[0],
-        accounts: entry[1]
-      }
+        accounts: entry[1],
+      };
       accountTypeTokenTopOwners.push(newEntry);
     }
-    return accountTypeTokenTopOwners
+    return accountTypeTokenTopOwners;
   }
 
   /**

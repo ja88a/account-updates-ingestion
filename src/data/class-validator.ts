@@ -37,7 +37,9 @@ export class AccountUpdateValidator {
    * @param eventLogs the list of account events to validate
    * @return List of validation errors, if any. Else an empty array.
    */
-  static async validateAll(eventLogs: AccountUpdate[]): Promise<ValidationError[]> {
+  static async validateAll(
+    eventLogs: AccountUpdate[],
+  ): Promise<ValidationError[]> {
     let validationErr: ValidationError[] = [];
     for (let i = 0; i < eventLogs.length; i++) {
       await this.validate(eventLogs[i])

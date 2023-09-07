@@ -3,15 +3,16 @@ import { IEventSourceService } from './IEventSourceService';
 
 import { plainToInstance } from 'class-transformer';
 import { ValidationError } from 'class-validator';
-import {
-  AccountUpdate,
-  AccountUpdateList
-} from '../data/account-update.dto';
+import { AccountUpdate, AccountUpdateList } from '../data/account-update.dto';
 
 import { EventEmitter } from 'node:events';
 import AService from '../common/service/AService';
 import { AccountUpdateValidator } from '../data/class-validator';
-import { EVENT_CASTING_MAX_INTERVAL_MS, EventName, MOCK_DATA_URL } from './constants';
+import {
+  EVENT_CASTING_MAX_INTERVAL_MS,
+  EventName,
+  MOCK_DATA_URL,
+} from './constants';
 import { ServiceStatusEvent } from '../data/service.dto';
 
 /**
@@ -83,7 +84,7 @@ export class EventSourceServiceMock
     }
 
     // Transform
-    let jsonRaw = await resp.text();
+    const jsonRaw = await resp.text();
     const eventLogs: AccountUpdateList = plainToInstance(
       AccountUpdateList,
       JSON.parse(`{"list":${jsonRaw}}`),
@@ -150,7 +151,9 @@ export class EventSourceServiceMock
     }
 
     // Generate a random number (integer) within the range [0; 1000]
-    const timeoutMs = Math.floor(Math.random() * EVENT_CASTING_MAX_INTERVAL_MS+1);
+    const timeoutMs = Math.floor(
+      Math.random() * EVENT_CASTING_MAX_INTERVAL_MS + 1,
+    );
 
     // Emit an event, remove the cast one from the FIFO & loop back to send next event sequentually
     this.eventCastingTimeout = setTimeout(() => {

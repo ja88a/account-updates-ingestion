@@ -9,7 +9,9 @@ describe('AccountHandlerTokenLeaders', () => {
       providers: [AccountHandlerTokenLeaders],
     }).compile();
 
-    service = module.get<AccountHandlerTokenLeaders>(AccountHandlerTokenLeaders);
+    service = module.get<AccountHandlerTokenLeaders>(
+      AccountHandlerTokenLeaders,
+    );
   });
 
   it('should be defined', () => {

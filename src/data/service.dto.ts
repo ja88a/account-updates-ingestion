@@ -29,7 +29,7 @@ export class ServiceStatusEvent {
 }
 
 /**
- * Functional data structure to collect accounts and their 
+ * Functional data structure to collect accounts and their
  * number of associated tokens
  */
 export class AccountToken {

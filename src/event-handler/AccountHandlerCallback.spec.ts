@@ -24,16 +24,16 @@ describe('AccountHandlerCallback', () => {
   it('should report a status', () => {
     expect(service.reportStatus()).toBeDefined();
   });
-  
+
   const validAccountUpd: AccountUpdate = {
-    id: "6BhkGCMVMyrjEEkrASJcLxfAvoW43g6BubxjpeUyZFoz",
+    id: '6BhkGCMVMyrjEEkrASJcLxfAvoW43g6BubxjpeUyZFoz',
     accountType: AccountType.ACCOUNT,
     tokens: 100,
     callbackTimeMs: 1000,
     data: {
-      mintId: "6BhkGCMVMyrjEEkrASJcLxfAvoW43g6BubxjpeUyZFoz"
+      mintId: '6BhkGCMVMyrjEEkrASJcLxfAvoW43g6BubxjpeUyZFoz',
     },
-    version: 77
+    version: 77,
   };
 
   const invalidAccountUpdId: AccountUpdate = {
@@ -42,20 +42,26 @@ describe('AccountHandlerCallback', () => {
     tokens: 100,
     callbackTimeMs: 1000,
     data: {
-      mintId: "6BhkGCMVMyrjEEkrASJcLxfAvoW43g6BubxjpeUyZFoz"
+      mintId: '6BhkGCMVMyrjEEkrASJcLxfAvoW43g6BubxjpeUyZFoz',
     },
-    version: 66
+    version: 66,
   };
 
   // it('should report no validation issue', () => {
   //   expect(service.validateAccountUpdate(validAccountUpd)).toBe(true);
   // });
-  
+
   it('should report a positive handling', () => {
-    expect(service.processAccountUpdate(validAccountUpd).then((result) => {return result})).toBeTruthy();
+    expect(
+      service.processAccountUpdate(validAccountUpd).then((result) => {
+        return result;
+      }),
+    ).toBeTruthy();
   });
 
   it('should not be processed', () => {
-    expect(service.processAccountUpdate(invalidAccountUpdId)).resolves.toBeFalsy();
+    expect(
+      service.processAccountUpdate(invalidAccountUpdId),
+    ).resolves.toBeFalsy();
   });
 });

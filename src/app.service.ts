@@ -12,9 +12,11 @@ export class AppService {
    * Provides a static HTML content
    */
   getHtmlWelcome(): string {
-    return '<html><body style="font-family:sans-serif;color:white;background-color:black;padding-top: 5%">' +
-      '<h2>Cheers ME!</h2><h4>BR from EU</h4>'+
-      '<img src="/diag/arch-overview_diag01bt.png"/><div><a href="/leaderboard">Leaderboard</div></body></html>';
+    return (
+      '<html><body style="font-family:sans-serif;color:white;background-color:black;padding-top: 5%">' +
+      '<h2>Cheers ME!</h2><h4>BR from EU</h4>' +
+      '<img src="/diag/arch-overview_diag01bt.png"/><div><a href="/leaderboard">Leaderboard</div></body></html>'
+    );
   }
 
   /**
