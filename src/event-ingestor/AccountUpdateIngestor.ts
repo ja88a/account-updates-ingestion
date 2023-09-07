@@ -20,7 +20,7 @@ import { IEventHandlerService } from '../event-handler/IEventHandlerService';
  * @override {@link AService}
  */
 @Injectable()
-export class EventIngestorService
+export class AccountUpdateIngestor
   extends AService
   implements IEventIngestorService
 {
