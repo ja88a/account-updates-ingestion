@@ -1,7 +1,5 @@
-const webpack = require('webpack');
 const path = require('path');
 const nodeExternals = require('webpack-node-externals');
-const { RunScriptWebpackPlugin } = require('run-script-webpack-plugin');
 
 module.exports = {
   entry: {
@@ -24,7 +22,7 @@ module.exports = {
       },
     ],
   },
-  mode: 'development',
+  mode: 'production',
   resolve: {
     extensions: ['.tsx', '.ts', '.js'],
   },
