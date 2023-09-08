@@ -38,7 +38,9 @@ COPY --chown=node:node --from=development /usr/src/app/node_modules ./node_modul
 COPY --chown=node:node . .
 
 # Run the build command which creates the production bundle
-RUN npm run build
+#RUN npm run build
+# Perform a webpack production build instead
+RUN npm run webpack:build
 
 # Set NODE_ENV environment variable
 ENV NODE_ENV production
@@ -68,11 +70,11 @@ COPY --chown=node:node --from=build /usr/src/app/dist ./dist
 # Resources specific to this project, for runnning a static web server
 COPY --chown=node:node --from=build /usr/src/app/static ./static
 
-# Set NODE_ENV environment variable: kept to 'development' just to keep displaying console logs
-ENV NODE_ENV development
+# Set NODE_ENV environment variable
+ENV NODE_ENV production
 
 # Optional specification of the port to expose
 EXPOSE 3000
 
 # Start the server using the production build
-CMD [ "node", "dist/main.js" ]
+CMD [ "node", "dist/server.js" ]
