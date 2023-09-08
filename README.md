@@ -11,14 +11,14 @@ This project demonstrates possible techniques for ingesting data & handling thei
 
 ## Tech requirements
 
-The [pnpm](https://pnpm.io/) package manager for Node.js is used & recommended, however it can be replaced by [yarn](https://yarnpkg.com/).
+The [pnpm](https://pnpm.io/) package manager for Node.js is used & recommended, however it can be replaced by [yarn](https://yarnpkg.com/). You can even stick to [npm](https://), just use `npm run X` instead of `pnpm X` in the below commands.
 
 You can install `pnpm` with the command:
 ```bash
 # Package installation
 $ npm install --global pnpm
 
-# OS integration
+# OS integration (optional)
 $ pnpm setup
 ```
 
@@ -26,14 +26,38 @@ This project has been developped using the [Node.js](https://nodejs.org) LTS ver
 
 Commit hooks are implemented using [husky](https://typicode.github.io/husky/). They lint, format & test the code automatically prior to actually committing.
 
-## Installation
+## Instructions
 
+### Quick run
+
+Having `pnpm` (or `yarn`) installed:
+```bash
+# Install and run locally (dev mode)
+$ pnpm i && pnpm start
+```
+
+If you just want a quick shot without installing `pnpm` or `yarn`:
+```bash
+# Install and run locally (dev mode)
+$ npm i && npm run start
+```
+
+Even cleaner, if you have Docker locally installed and want the artifacts & dependencies to be in the Docker image only:
+```bash
+# Install and run locally (prod mode)
+$ npm run docker:build && npm run docker:run
+```
+
+### Installation
+
+Download all necessary package dependencies, including development ones:
 ```bash
 $ pnpm install
 ```
 
-## Running the app
+### Running the app
 
+For local runs of the app, in dev or production-like mode:
 ```bash
 # development
 $ pnpm start
@@ -45,7 +69,7 @@ $ pnpm start:dev
 $ pnpm start:prod
 ```
 
-## Test
+### Test
 
 ```bash
 # unit tests
@@ -61,13 +85,68 @@ $ pnpm test:cov
 $ pnpm test:e2e
 ```
 
+### Docker Integration
+
+[Docker](https://docker.com) is used here for releasing a production-ready app.
+Actual Docker configs are not designed for supporting an isolated development framework.
+
+You need a local [Docker](https://docker.com) installation to run the followings:
+
+```bash
+# Build the production-ready app container:
+$ pnpm docker:build
+
+# Build the production-ready & optimized (webpack) app container:
+$ pnpm docker:build:prod
+
+# Run locally the container
+$ pnpm docker:run
+
+# Access to the container shell
+$ pnpm docker:sh
+```
+
+Review the script for building the production image: refer to [Dockerfile](./Dockerfile) and [Dockerfile.prod](./Dockerfile.prod) along with [webpack.prod.js](./webpack.prod.js).
+
+The main benefit is to run the server app without a development context, i.e. without the node modules' dev dependencies.
+
+### Webpack Optimization
+
+Webpack is used to further optimize the generated app, by bundling all the code into a single `dist/server.js` file and having it minimized. Code mapping are kept to support debugging operations.
+
+The webpack-based bundling is intended for the release of a production package. The integration of the Hot Module Replacement (HMR) for developing in this mode has not been considered/implemented.
+
+Refer to the production config file [`webpack.prod.js`](./webpack.prod.js).
+
+```bash
+# Compile & bundle the app using Webpack
+$ pnpm webpack:build
+
+# Run locally the Webpack bundle
+$ pnpm webpack:run
+```
+
+### Clean up
+
+Quickly reset your local repository, by removing all temporary artifacts:
+```bash
+# Remove all downloaded & generated artifacts
+$ pnpm reset
+```
+
+Clean up your local Docker image & container registry:
+```bash
+# Remove the last generated Docker containers & images
+$ pnpm docker:cleanup
+```
+
 ## Architecture
 ### Key drivers
 
 While this is a demo application, the design of this app meets the following fundamentals:
-  * The service must be **evolutive**: modularity (add/remove/replace internal services without impacting other); strict minimal dependencies among components; communications through internal generic interfaces, or events
+  * The service must be **evolutive**: modularity (add/remove/replace internal services without impacting others); strict minimal dependencies among components; communications through internal generic interfaces or events
   * The service must be **scalable**: support for vertical & horizontal scaling; low CPU & memory footprint; high throuput & low response time; extensive usage of async supports and concurrency considerations
-  * The service must be **secure**: low network exposure; systematic external inputs validation; lowest trust even among internal services
+  * The service must be **secure**: low network exposure; systematic external inputs validation; lowest trust even among internal services; clean errors management, based on exceptions propagation
 
 Actual system has been divided into 3 main business area (and corresponding service types):
 1. Handling the external source of data events
