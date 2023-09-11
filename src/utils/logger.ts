@@ -1,22 +1,57 @@
 import { createLogger, format, transports } from 'winston';
-import { EConfigRunMode } from '../common/config';
+
+import 'winston-daily-rotate-file';
+import { DailyRotateFile } from 'winston/lib/winston/transports';
+
+import { EConfigRunMode, LOGS_DIR } from '../common/config';
 
 /**
  * WinstonJS Logger integration
  *
  * Refer to [winstonjs/winston](https://github.com/winstonjs/winston)
+ * 
+ * Integrates an automatic Daily File Rotation of log files and a retention policy over time
  */
 const logger = createLogger({
   level: 'info',
-  format: format.json(),
+  exitOnError: true, // Default is `true` for not interfering
+  format: format.combine(
+    format.timestamp({
+      format: 'YYYY-MM-DD HH:mm:ss.SSS',
+    }),
+    format.json(),
+  ),
+
   defaultMeta: { service: 'onchain-events-ingestor' },
   transports: [
-    //
     // - Write all logs with importance level of `error` or less to `error.log`
+    new DailyRotateFile({
+      filename: LOGS_DIR + 'error-%DATE%.log',
+      level: 'error',
+      datePattern: 'YYYY-MM-DD-HH',
+      zippedArchive: true,
+      maxSize: '20m',
+      maxFiles: '10d',
+    }),
     // - Write all logs with importance level of `info` or less to `combined.log`
-    //
-    new transports.File({ filename: 'error.log', level: 'error' }),
-    new transports.File({ filename: 'combined.log', level: 'info' }),
+    new DailyRotateFile({
+      filename: LOGS_DIR + 'combined-%DATE%.log',
+      level: 'info',
+      datePattern: 'YYYY-MM-DD-HH',
+      zippedArchive: true,
+      maxSize: '50m',
+      maxFiles: '5d',
+    }),
+  ],
+  exceptionHandlers: [
+    //new transports.File({ filename: LOGS_DIR + 'exceptions.log' }),
+    new DailyRotateFile({
+      filename: LOGS_DIR + 'exceptions-%DATE%.log',
+      datePattern: 'YYYY-MM-DD-HH',
+      zippedArchive: true,
+      maxSize: '20m',
+      maxFiles: '31d',
+    }),
   ],
 });
 
@@ -41,6 +76,7 @@ if (process.env.NODE_ENV !== EConfigRunMode.PROD) {
     new transports.Console({
       level: 'info',
       format: alignedWithColorsAndTime,
+      handleExceptions: true,
     }),
   );
 }
