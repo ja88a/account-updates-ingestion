@@ -29,18 +29,22 @@ export class AppController {
     private readonly eventHandlerLeader: AccountHandlerTokenLeaders,
   ) {}
 
-  @Get()
-  getStaticWelcome(): string {
-    return this.appService.getHtmlWelcome();
-  }
-
   @Get('/ping')
   getPing(): boolean {
     return true;
   }
 
-  @Get('/leaderboard')
+  @Get('/status')
   getStatus(): any {
+    return {
+      accounts: this.eventIngestor.reportStatus(),
+      leaderboard: this.eventHandlerLeader.reportStatus(),
+      pending: this.eventHandlerCallback.reportStatus(),
+    };
+  }
+
+  @Get('/leaderboard')
+  getLeaderboard(): any {
     return this.eventHandlerLeader.reportLeaderboard();
   }
 
@@ -74,9 +78,10 @@ export class AppController {
   /**
    * Bind the services together
    *
-   * source -co-> ingest -> handle
+   * `Source` <--listens- `Ingestor` -triggers--> `Handler`
    */
   private bindServices() {
+    // Register the app controller to get updates on the source service, service related
     this.eventSource.registerListener(
       EventName.SERVICE_UPDATE,
       this.handleServiceEvent,
@@ -132,6 +137,7 @@ export class AppController {
 
   /**
    * Check if there are AccountUpdate callbacks still pending
+   * If not, stop the app
    */
   stopOnceAllCallbackAreTiggered() {
     const callbacksStatus = this.eventHandlerCallback.reportStatus();
@@ -145,7 +151,7 @@ export class AppController {
   }
 
   /**
-   *
+   * Stop the app: log the max tokens' accounts and exit if configured so
    */
   stop(shutdown: boolean | undefined = false) {
     // Report the biggest tokens' owner per account type
@@ -162,7 +168,10 @@ export class AppController {
   }
 
   /**
-   * Default shutdown method
+   * Default App shutdown method
+   *
+   * It is bound to the app/shutdown shutdown hooks and gets triggered on any interruptions.
+   *
    * @param signal Signal at the origin of this shutdown call
    */
   async onApplicationShutdown(signal: string) {
