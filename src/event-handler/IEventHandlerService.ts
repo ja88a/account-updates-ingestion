@@ -10,10 +10,4 @@ export interface IEventHandlerService extends IService {
    * @param accountUpd The Account Update event to be processed
    */
   processAccountUpdate(accountUpd: AccountUpdate): Promise<any>;
-
-  /**
-   * Report a status about the dedicated Service
-   * @returns a data set specific to the service business
-   */
-  reportStatus(): any;
 }

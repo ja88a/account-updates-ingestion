@@ -9,6 +9,12 @@ export interface IService {
   init(): boolean;
 
   /**
+   * Report a status about the dedicated Service
+   * @returns a data set specific to the service business
+   */
+  reportStatus(): any;
+
+  /**
    * Shutdown method used for managing the service lifecycle
    * @param signal Signal code used for interrupting the running session
    */

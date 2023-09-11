@@ -33,13 +33,26 @@ abstract class AService implements IService {
     return validErrors;
   }
 
-  /** @see {@link IService.init} */
+  /**
+   * @see {@link IService.init}
+   */
   init(): boolean {
     this.logger.debug('Initializing the service');
     return true;
   }
 
-  /** @see {@link IService.shutdown} */
+  /**
+   * A status must be reported by each service and is specific to its business.
+   * So this method must be overridden.
+   * @see {@link IService.reportStatus}
+   */
+  reportStatus(): any {
+    throw new Error('Method not implemented.');
+  }
+
+  /**
+   * @see {@link IService.shutdown}
+   */
   shutdown(signal: string): void {
     this.logger.debug('Shutting down the service on Signal: ' + signal);
   }

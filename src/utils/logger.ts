@@ -9,7 +9,7 @@ import { EConfigRunMode, LOGS_DIR } from '../common/config';
  * WinstonJS Logger integration
  *
  * Refer to [winstonjs/winston](https://github.com/winstonjs/winston)
- * 
+ *
  * Integrates an automatic Daily File Rotation of log files and a retention policy over time
  */
 const logger = createLogger({

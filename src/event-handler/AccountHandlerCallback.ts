@@ -60,6 +60,9 @@ export class AccountHandlerCallback
 
   /**
    * Report a status on the number of active/pending callbacks and the list of related AccountUpdate ID
+   *
+   * @see {@link IService.reportStatus}
+   * @override {@link AService.reportStatus}
    * @returns the number of active `callbacks` and the ID of AccountUpdate in `accounts`
    */
   reportStatus(): { callbacks: number; accounts: string[] } {
