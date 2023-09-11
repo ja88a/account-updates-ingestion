@@ -4,8 +4,7 @@
 
 Purpose: Simulation of the casting, ingestion & handling of accounts' update events issued by a blockchain.
 
-Solana account updates are considered, being streamed continuously in a real time system. In the context of this project, the casting of logged account updates is
-emulated: a static JSON file is loaded (made of +100 entries) and their casting is made sequentially, based on a random time interval.
+Solana account updates are considered, being streamed continuously in a real time system. In the context of this project, the casting of logged account updates is emulated: a static JSON file is loaded (made of +100 entries) and their casting is made sequentially, based on a random time interval.
 
 This project demonstrates possible techniques for ingesting data & handling their further processing. Moreover it emphasizes on good software development practices, in terms of tooling, architecture and functionnal design to address a production-ready service.
 
@@ -104,6 +103,9 @@ $ pnpm docker:run
 
 # Access to the container shell
 $ pnpm docker:sh
+
+# Remove the generated docker container(s) and image(s)
+$ pnpm docker:cleanup
 ```
 
 Review the script for building the production image: refer to [Dockerfile](./Dockerfile) and [Dockerfile.prod](./Dockerfile.prod) along with [webpack.prod.js](./webpack.prod.js).
@@ -208,16 +210,19 @@ The general adopted pattern is a controller-services approach for this simple ap
 The project structure allows setting clear boundaries among each components scope and dependencies. Moreover extracting the actual 4 services into separate and autonomous full modules (having their own controller, exposed RPC API, etc) is made easily possible.
 
 #### Service binding
-To lower down the dependency among services, they don't communicate directly to each other. Instead the listeners callback are registered to the triggerer. This binding of services (handler's callback registration) is performed by the app controller. 2 mains types have been implemented:
-* EventEmitter-based technique for Ingestors to register their callback to be given for a given event-name
-* Interface method direct registration for Events handlers callback to be triggered by event-compatible Ingestor services
 
-Refer to the operated bindings in [AppController.bindServices()](./src/app.controller.ts).
+To lower down the dependency among services, they don't communicate directly to each other. Instead the listeners callback are registered to the triggerer. This binding of services (handler's callback registration) is performed by the app controller. 2 mains types have been implemented:
+* EventEmitter-based technique for Ingestors to register their callback to be triggered on a given event name
+* Interface method direct registration for Events handlers callback to be triggered by Ingestor services compatible with the event type (payload)
+
+Refer to the operated binding of services in [AppController.bindServices()](./src/app.controller.ts).
 
 #### Delaying
+
 In order to schedule/delay an async action (e.g. casting next account update event) or to wait for a given state (e.g. wait for all callbacks to be triggered before shutting down) a Node-based Timeout technique is used.
 
 #### Validating
+
 A Code-as-Schema approach has been opted to validate and filter out problematic account update events. The implemented technique is based on [class-validator](https://www.npmjs.com/package/class-validator). Fields and values are checked per the constrained implemented for example in [account-update.dto.ts](./src/data/account-update.dto.ts).
 
 
@@ -244,9 +249,12 @@ The interesting challenge for going to production is to replace actual mock impl
 
 Such external services would also have to be continuously monitored (external data source server, in memory caching & database): their access, availability, performance and operating costs.
 
-## Tasks
+## Technical Challenge
 
-### Features support
+Below  are the provided inputs & expectations of the technical challenge this project has been originally developped for.
+
+### Tasks
+#### Features support
 
 - [x] Create classes having appropriate encapsulation, attributes, and well deﬁned interfaces.
 
@@ -266,7 +274,7 @@ Such external services would also have to be continuously monitored (external da
 
 - [x] Once all events and callbacks have completed, print the highest token-value accounts by AccountType (taking into account the right version), and gracefully shut-down the system.
 
-### Project support
+#### Project support
 
 1. A README ﬁle that contains:
 - [x] Instructions on how to run and test your code in a local environment through the command line.
@@ -280,9 +288,9 @@ Such external services would also have to be continuously monitored (external da
 - [x] Has test coverage to ensure quality and safety *(Actual is minimal)*
 
 
-## Info
+### Info
 
-### Data model
+#### Data model
 
 Accounts' sample data set:
 
@@ -317,11 +325,11 @@ version should be erased.
 been ingested.
 
 
-### Example scenarios
+#### Example scenarios
 
 These scenarios only cover a single accountID, but demonstrate the expected ingestion / callback behaviors:
 
-#### Scenario 1 - Single Update
+##### Scenario 1 - Single Update
 
 0ms - simulation starts - ID1 scheduled to be ingested 550ms (0-1000ms random) later
 
@@ -329,7 +337,7 @@ These scenarios only cover a single accountID, but demonstrate the expected inge
 
 950ms - ID1 v1 callback ﬁres (and we log with version 1)
 
-#### Scenario 2 - Updates with Cancellation
+##### Scenario 2 - Updates with Cancellation
 
 0ms - simulation starts - ID1 scheduled to be ingested 550ms (0-1000ms random) later
 
@@ -341,6 +349,16 @@ These scenarios only cover a single accountID, but demonstrate the expected inge
 
 1050ms - ID1 v3 callback ﬁres
 
-## Credits
+### Screenshots
 
-**[Nest](https://github.com/nestjs/nest)** is used as the progressive [Node.js](https://nodejs.org) framework for building efficient and scalable server-side applications.
+Screenshots of the console output when running the app using `docker:run`
+
+![Console screenshot docker:run](./static/screenshot/console_docker-run.png)
+![Console screenshot: processing done](./static/screenshot/console_process-done.png)
+
+## License
+
+Distributed under the [Apache License 2.0][license].
+
+<!-- license -->
+[license]: LICENSE
