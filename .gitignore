@@ -131,3 +131,6 @@ dist
 
 # Visual Studio Code
 .vscode
+
+# Documentation generated from code
+docs
