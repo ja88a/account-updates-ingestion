@@ -1,6 +1,8 @@
-/** The HTTP source where the mock json data set is to be retrieved */
+import { MS_CONFIG } from '../common/config';
+
+/** The default HTTP source where the mock json data set is to be retrieved */
 export const MOCK_DATA = {
-  HOST_URL: 'http://localhost:3000/',
+  HOST_URL: 'http://localhost:' + MS_CONFIG.PORT_EXPOSED + '/',
   FILENAME_JSON: 'coding-challenge-input.json',
 };
 export const MOCK_DATA_URL = MOCK_DATA.HOST_URL + MOCK_DATA.FILENAME_JSON;
