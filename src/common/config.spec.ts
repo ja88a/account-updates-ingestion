@@ -1,8 +1,4 @@
-import {
-  EConfigRunMode,
-  MICROSERVICE_VERSION_PUBLIC,
-  VALID_OPT,
-} from './config';
+import { EConfigRunMode, MS_CONFIG, VALID_OPT } from './config';
 
 describe('App Config', () => {
   it('Class Validator Options', () => {
@@ -19,10 +15,10 @@ describe('App Config', () => {
   });
 
   it('Service API Version', () => {
-    expect(MICROSERVICE_VERSION_PUBLIC).toBeDefined();
+    expect(MS_CONFIG.VERSION_PUBLIC).toBeDefined();
 
     if (process.env.NODE_ENV == EConfigRunMode.PROD) {
-      expect(MICROSERVICE_VERSION_PUBLIC).toBe('1');
+      expect(MS_CONFIG.VERSION_PUBLIC).toBe('1');
     }
   });
 });

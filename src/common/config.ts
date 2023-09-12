@@ -1,21 +1,31 @@
 import { ValidatorOptions } from 'class-validator';
 
 /**
- * The public port number this Nodejs app exposes, where the controller API is accessible from
+ * Common set of settings relating to the Microservice configuration
  */
-export const MICROSERVICE_PORT_EXPOSED = 3000;
+export const MS_CONFIG = {
+  /**
+   * The URI prefix behind which all HTTP API are exposed
+   */
+  URI_DOMAIN_API: 'api',
 
-/**
- * Actual URI version number(s) this microservice's controller supports
- * It can consists in an array, e.g. `['1', '2']` or be `VERSION_NEUTRAL`.
- * Refer to {@link https://docs.nestjs.com/techniques/versioning}
- */
-export const MICROSERVICE_VERSION_PUBLIC = '1';
+  /**
+   * Actual URI version number(s) this microservice's controller supports
+   * It can consists in an array, e.g. `['1', '2']` or be `VERSION_NEUTRAL`.
+   * Refer to {@link https://docs.nestjs.com/techniques/versioning}
+   */
+  VERSION_PUBLIC: '1',
 
-/**
- * Specify if the server app should automatically shutdown by default, when the service gets inactive
- */
-export const EXIT_ON_STOP = true;
+  /**
+   * The public port number this Nodejs app exposes, where the controller API is accessible from
+   */
+  PORT_EXPOSED: 3000,
+
+  /**
+   * Specify if the server app should automatically shutdown by default, when the service gets inactive
+   */
+  EXIT_ON_STOP: true,
+};
 
 /**
  * Set of constants specific to the logger's configuration

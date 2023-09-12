@@ -32,13 +32,13 @@ describe('AppController', () => {
     appController = app.get<AppController>(AppController);
   });
 
-  describe('/ping', () => {
+  describe('Getting the Service Ping', () => {
     it('should return "true"', () => {
       expect(appController.getPing()).toBe<boolean>(true);
     });
   });
 
-  describe('/status', () => {
+  describe('Getting the Service Status', () => {
     it('should return a JSON data set', () => {
       const appStatusReport = appController.getStatus();
       expect(appStatusReport.accounts).toBeDefined();
@@ -47,11 +47,19 @@ describe('AppController', () => {
     });
   });
 
-  describe('/leaderboard', () => {
+  describe('Getting the Leaderboard report', () => {
     it('should return an empty Object', () => {
       const leaderboardReport = appController.getLeaderboard();
       expect(leaderboardReport).toBeDefined();
       expect(leaderboardReport[EAccountType.ACCOUNT]).toBeUndefined();
+    });
+  });
+
+  describe('Iniating the app module', () => {
+    it('should init all services smoothly', () => {
+      appController.onModuleInit().catch((error) => {
+        fail('No error is expected but: ' + error);
+      });
     });
   });
 });

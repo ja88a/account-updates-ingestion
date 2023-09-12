@@ -1,7 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { VersioningType } from '@nestjs/common/enums/version-type.enum';
-import { MICROSERVICE_PORT_EXPOSED } from './common/config';
+import { MS_CONFIG } from './common/config';
 
 async function bootstrap() {
   // Initiate the app, with the default logger
@@ -9,7 +9,10 @@ async function bootstrap() {
     logger: ['error', 'warn', 'log', 'debug'],
   });
 
-  // Enable URI versioning
+  // Prefix this service's HTTP REST API
+  app.setGlobalPrefix(MS_CONFIG.URI_DOMAIN_API);
+
+  // Enable the URI-based versioning of APIs
   app.enableVersioning({
     type: VersioningType.URI,
   });
@@ -18,6 +21,6 @@ async function bootstrap() {
   app.enableShutdownHooks();
 
   // Start the app
-  await app.listen(MICROSERVICE_PORT_EXPOSED);
+  await app.listen(MS_CONFIG.PORT_EXPOSED);
 }
 bootstrap();

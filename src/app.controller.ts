@@ -3,7 +3,7 @@ import { AppService } from './app.service';
 import Logger from './utils/logger';
 
 import { exit } from 'process';
-import { EXIT_ON_STOP, MICROSERVICE_VERSION_PUBLIC } from './common/config';
+import { MS_CONFIG } from './common/config';
 import { ServiceStatusEvent } from './data/service.dto';
 import { AccountHandlerCallback } from './event-handler/AccountHandlerCallback';
 import { AccountHandlerTokenLeaders } from './event-handler/AccountHandlerTokenLeaders';
@@ -21,7 +21,8 @@ import { EEventName } from './event-source/constants';
  * A minimal REST API is exposed: http-json
  */
 @Controller({
-  version: MICROSERVICE_VERSION_PUBLIC,
+  version: MS_CONFIG.VERSION_PUBLIC,
+  path: '',
 })
 export class AppController {
   /** Logger */
@@ -195,7 +196,7 @@ export class AppController {
         this.stopOnceAllCallbackAreTiggered();
       }, 500);
     } else {
-      this.stop(EXIT_ON_STOP);
+      this.stop(MS_CONFIG.EXIT_ON_STOP);
     }
   }
 
