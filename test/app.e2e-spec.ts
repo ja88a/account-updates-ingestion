@@ -4,7 +4,8 @@ import * as request from 'supertest';
 import { AppModule } from './../src/app.module';
 import { MS_CONFIG } from './../src/common/config';
 
-const API_URI = '/'+MS_CONFIG.URI_DOMAIN_API +'/v'+ MS_CONFIG.VERSION_PUBLIC;
+const API_URI =
+  '/' + MS_CONFIG.URI_DOMAIN_API + '/v' + MS_CONFIG.VERSION_PUBLIC;
 
 describe('AppController (e2e)', () => {
   let app: INestApplication;
@@ -25,10 +26,9 @@ describe('AppController (e2e)', () => {
     });
 
     // Start the app server
-    await app.listen(MS_CONFIG.PORT_EXPOSED)
-      .then(() => {
-        app.init();
-      });    
+    await app.listen(MS_CONFIG.PORT_EXPOSED).then(() => {
+      app.init();
+    });
   });
 
   it('/ping (GET)', () => {
