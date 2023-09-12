@@ -10,7 +10,7 @@ import { EConfigRunMode, LOGS_DIR } from '../common/config';
  *
  * Refer to [winstonjs/winston](https://github.com/winstonjs/winston)
  *
- * Integrates an automatic Daily File Rotation of log files and a retention policy over time
+ * Integrates an automatic Daily File Rotation for local log files and a retention policy over time
  */
 const logger = createLogger({
   level: 'info',
@@ -42,6 +42,14 @@ const logger = createLogger({
       maxSize: '50m',
       maxFiles: '5d',
     }),
+    // // AWS CloudWatch connector -> requires `winston-aws-cloudwatch`
+    // new CloudWatchLogsTransport({
+    //   logGroupName: 'my-log-group',
+    //   logStreamName: 'my-log-stream',
+    //   awsAccessKeyId: 'my-access-key-id',
+    //   awsSecretKey: 'my-secret-key',
+    //   awsRegion: 'us-east-1'
+    // }),
   ],
   exceptionHandlers: [
     //new transports.File({ filename: LOGS_DIR + 'exceptions.log' }),
