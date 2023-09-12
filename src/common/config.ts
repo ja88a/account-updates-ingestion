@@ -1,10 +1,42 @@
 import { ValidatorOptions } from 'class-validator';
 
-/** Specify if the server app should automatically shutdown by default, when the service gets inactive */
+/**
+ * The public port number this Nodejs app exposes, where the controller API is accessible from
+ */
+export const MICROSERVICE_PORT_EXPOSED = 3000;
+
+/**
+ * Actual URI version number(s) this microservice's controller supports
+ * It can consists in an array, e.g. `['1', '2']` or be `VERSION_NEUTRAL`.
+ * Refer to {@link https://docs.nestjs.com/techniques/versioning}
+ */
+export const MICROSERVICE_VERSION_PUBLIC = '1';
+
+/**
+ * Specify if the server app should automatically shutdown by default, when the service gets inactive
+ */
 export const EXIT_ON_STOP = true;
 
-/** Name of the directory where log files are reported */
-export const LOGS_DIR = 'logs/';
+/**
+ * Set of constants specific to the logger's configuration
+ */
+export const LOGGER = {
+  /**
+   * Name of the directory where log files are reported
+   */
+  OUTPUT_DIR: 'logs/',
+
+  /**
+   * Log files name default time postfix
+   */
+  FILE_DATE_PATTERN: 'YYYY-MM-DD',
+
+  /**
+   * Pattern of the timestamp reported for log entries in the json files and in the console
+   * Leave it empty `''` for the default ISO date format
+   */
+  TIMESTAMP_PATTERN: 'YYYY-MM-DD HH:mm:ss.SSS',
+};
 
 /**
  * Imported Data Validation options

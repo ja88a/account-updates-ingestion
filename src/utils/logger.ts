@@ -3,7 +3,7 @@ import { createLogger, format, transports } from 'winston';
 import 'winston-daily-rotate-file';
 import { DailyRotateFile } from 'winston/lib/winston/transports';
 
-import { EConfigRunMode, LOGS_DIR } from '../common/config';
+import { EConfigRunMode, LOGGER } from '../common/config';
 
 /**
  * WinstonJS Logger integration
@@ -17,27 +17,26 @@ const logger = createLogger({
   exitOnError: true, // Default is `true` for not interfering
   format: format.combine(
     format.timestamp({
-      format: 'YYYY-MM-DD HH:mm:ss.SSS',
+      format: LOGGER.TIMESTAMP_PATTERN,
     }),
     format.json(),
   ),
-
   defaultMeta: { service: 'onchain-events-ingestor' },
   transports: [
     // - Write all logs with importance level of `error` or less to `error.log`
     new DailyRotateFile({
-      filename: LOGS_DIR + 'error-%DATE%.log',
+      filename: LOGGER.OUTPUT_DIR + 'error-%DATE%.log',
       level: 'error',
-      datePattern: 'YYYY-MM-DD-HH',
+      datePattern: LOGGER.FILE_DATE_PATTERN,
       zippedArchive: true,
       maxSize: '20m',
       maxFiles: '10d',
     }),
     // - Write all logs with importance level of `info` or less to `combined.log`
     new DailyRotateFile({
-      filename: LOGS_DIR + 'combined-%DATE%.log',
+      filename: LOGGER.OUTPUT_DIR + 'combined-%DATE%.log',
       level: 'info',
-      datePattern: 'YYYY-MM-DD-HH',
+      datePattern: LOGGER.FILE_DATE_PATTERN,
       zippedArchive: true,
       maxSize: '50m',
       maxFiles: '5d',
@@ -52,10 +51,10 @@ const logger = createLogger({
     // }),
   ],
   exceptionHandlers: [
-    //new transports.File({ filename: LOGS_DIR + 'exceptions.log' }),
+    //new transports.File({ filename: LOGGER.OUTPUT_DIR + 'exceptions.log' }),
     new DailyRotateFile({
-      filename: LOGS_DIR + 'exceptions-%DATE%.log',
-      datePattern: 'YYYY-MM-DD-HH',
+      filename: LOGGER.OUTPUT_DIR + 'exceptions-%DATE%.log',
+      datePattern: LOGGER.FILE_DATE_PATTERN,
       zippedArchive: true,
       maxSize: '20m',
       maxFiles: '31d',
@@ -70,13 +69,13 @@ const logger = createLogger({
 if (process.env.NODE_ENV !== EConfigRunMode.PROD) {
   const consoleFormat = format.printf(
     ({ timestamp, label, level, message }) => {
-      return `${timestamp} [${label}]\t${level}: ${message}`;
+      return `${timestamp} [${label}] ${level}: ${message}`;
     },
   );
 
   const alignedWithColorsAndTime = format.combine(
     format.colorize({ all: true }),
-    format.timestamp({ format: 'MM-DD HH:mm:ss.SSS' }),
+    format.timestamp({ format: LOGGER.TIMESTAMP_PATTERN }),
     consoleFormat,
   );
 

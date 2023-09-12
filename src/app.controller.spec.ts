@@ -54,5 +54,4 @@ describe('AppController', () => {
       expect(leaderboardReport[EAccountType.ACCOUNT]).toBeUndefined();
     });
   });
-
 });

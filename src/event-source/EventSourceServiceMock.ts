@@ -10,7 +10,7 @@ import AService from '../common/service/AService';
 import { AccountUpdateValidator } from '../data/class-validator';
 import {
   EVENT_CASTING_MAX_INTERVAL_MS,
-  EventName,
+  EEventName,
   MOCK_DATA_URL,
 } from './constants';
 import { ServiceStatusEvent } from '../data/service.dto';
@@ -54,7 +54,7 @@ export class EventSourceServiceMock
    * @see {@link IEventSourceService.registerListener}
    */
   registerListener<T>(
-    eventName: EventName,
+    eventName: EEventName,
     callback: { (data: T): Promise<void> },
     context?: any,
   ): void {
@@ -146,7 +146,7 @@ export class EventSourceServiceMock
         active: false,
         leftover: 0,
       };
-      this.eventEmitter.emit(EventName.SERVICE_UPDATE, statusEvt);
+      this.eventEmitter.emit(EEventName.SERVICE_UPDATE, statusEvt);
       return;
     }
 
@@ -170,10 +170,10 @@ export class EventSourceServiceMock
    * @param data The `data.AccountEvent` dataset to provide to listeners
    */
   private emitAccountEvent(data: AccountUpdate): boolean {
-    const result = this.eventEmitter.emit(EventName.OC_ACCOUNT_UPDATE, data);
+    const result = this.eventEmitter.emit(EEventName.OC_ACCOUNT_UPDATE, data);
     if (!result)
       this.logger.warn(
-        `No listeners found for events '${EventName.OC_ACCOUNT_UPDATE}'`,
+        `No listeners found for events '${EEventName.OC_ACCOUNT_UPDATE}'`,
       );
     return result;
   }

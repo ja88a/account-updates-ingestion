@@ -1,4 +1,4 @@
-import { EventName } from './constants';
+import { EEventName } from './constants';
 import { IService } from '../common/service/IService';
 
 /**
@@ -13,7 +13,7 @@ export interface IEventSourceService extends IService {
    * @param context Optional parameter designating the contextual instance (this) in which the callback is to be executed
    */
   registerListener<T>(
-    eventName: EventName,
+    eventName: EEventName,
     callback: { (data: T): Promise<void> },
     context?: any,
   ): void;

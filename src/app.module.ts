@@ -8,6 +8,11 @@ import { AccountHandlerTokenLeaders } from './event-handler/AccountHandlerTokenL
 import { AccountUpdateIngestor } from './event-ingestor/AccountUpdateIngestor';
 import { EventSourceServiceMock as EventSourceService } from './event-source/EventSourceServiceMock';
 
+/**
+ * The Server Application main module.
+ *
+ * Enable binding internal & external modules and services
+ */
 @Module({
   imports: [
     ServeStaticModule.forRoot({

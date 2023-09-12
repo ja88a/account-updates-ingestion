@@ -1,26 +1,39 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, Put } from '@nestjs/common';
 import { AppService } from './app.service';
 import Logger from './utils/logger';
 
+import { exit } from 'process';
+import { EXIT_ON_STOP, MICROSERVICE_VERSION_PUBLIC } from './common/config';
+import { ServiceStatusEvent } from './data/service.dto';
+import { AccountHandlerCallback } from './event-handler/AccountHandlerCallback';
+import { AccountHandlerTokenLeaders } from './event-handler/AccountHandlerTokenLeaders';
+import { AccountUpdateIngestor } from './event-ingestor/AccountUpdateIngestor';
 import {
   EventSourceServiceMock as EventSourceService,
   EventSourceServiceMock,
 } from './event-source/EventSourceServiceMock';
-import { AccountUpdateIngestor } from './event-ingestor/AccountUpdateIngestor';
-import { AccountHandlerCallback } from './event-handler/AccountHandlerCallback';
-import { exit } from 'process';
-import { EventName } from './event-source/constants';
-import { AccountHandlerTokenLeaders } from './event-handler/AccountHandlerTokenLeaders';
-import { ServiceStatusEvent } from './data/service.dto';
-import { EXIT_ON_STOP } from './common/config';
+import { EEventName } from './event-source/constants';
 
-@Controller()
+/**
+ * Main controller of the application, responsible for the binding of available services
+ * and the management of the app lifecycle.
+ *
+ * A minimal REST API is exposed: http-json
+ */
+@Controller({
+  version: MICROSERVICE_VERSION_PUBLIC,
+})
 export class AppController {
   /** Logger */
   private readonly logger = Logger.child({
     label: AppController.name,
   });
 
+  /**
+   * Default App's main module constructor
+   *
+   * Benefits from nestjs module's injections @see app.module
+   */
   constructor(
     private readonly appService: AppService,
     private readonly eventSource: EventSourceService,
@@ -29,13 +42,22 @@ export class AppController {
     private readonly eventHandlerLeader: AccountHandlerTokenLeaders,
   ) {}
 
+  /**
+   * Simple ping service for basic monitoring of the app availability
+   * @returns `200` http response code & `true` if the app is running
+   */
   @Get('/ping')
   getPing(): boolean {
     return true;
   }
 
+  /**
+   * Retrieve a complete snapshot of this app status
+   * @returns the actually indexed `accounts`, accounts that own
+   * the max tokens (`leaderboard`) and the number of callbacks `pending` to be triggered with the associated source accounts
+   */
   @Get('/status')
-  getStatus(): any {
+  getStatus(): { accounts: any[]; leaderboard: any[]; pending: any } {
     return {
       accounts: this.eventIngestor.reportStatus(),
       leaderboard: this.eventHandlerLeader.reportStatus(),
@@ -43,10 +65,37 @@ export class AppController {
     };
   }
 
+  /**
+   * Retrieve actual accounts owning the most known number of tokens, grouped by account type.
+   * It is designed as a basic leaderboard.
+   *
+   * Note: the provided account types must be known in advance, else dynamically discovered.
+   * @returns a list of account types with their associated top owners of tokens
+   */
   @Get('/leaderboard')
   getLeaderboard(): any {
     return this.eventHandlerLeader.reportLeaderboard();
   }
+
+  /**
+   * Enable to restart the casting of mock events' data
+   * @returns none
+   */
+  @Put('/recast')
+  recast(): void {
+    return this.start();
+  }
+
+  /**
+   * Stop and shut down the server app
+   * @returns none
+   */
+  @Put('/shutdown')
+  shutdown(): void {
+    this.stop(true);
+  }
+
+  /// =================================================================
 
   /**
    * Default init method for the App and its services
@@ -83,14 +132,14 @@ export class AppController {
   private bindServices() {
     // Register the app controller to get updates on the source service, service related
     this.eventSource.registerListener(
-      EventName.SERVICE_UPDATE,
+      EEventName.SERVICE_UPDATE,
       this.handleServiceEvent,
       this,
     );
 
     // Register the Account Update Ingesting service to handle corresponding events
     this.eventSource.registerListener(
-      EventName.OC_ACCOUNT_UPDATE,
+      EEventName.OC_ACCOUNT_UPDATE,
       this.eventIngestor.ingestAccountUpdate,
       this.eventIngestor,
     );
@@ -104,7 +153,7 @@ export class AppController {
    * Start listening to account update events [and casting them]
    * as well as having them handled for their indexation
    */
-  start() {
+  private start(): void {
     this.logger.info(
       'Start the Account Update events casting & ingestion session',
     );
@@ -139,7 +188,7 @@ export class AppController {
    * Check if there are AccountUpdate callbacks still pending
    * If not, stop the app
    */
-  stopOnceAllCallbackAreTiggered() {
+  private stopOnceAllCallbackAreTiggered() {
     const callbacksStatus = this.eventHandlerCallback.reportStatus();
     if (callbacksStatus.callbacks > 0) {
       setTimeout(() => {
@@ -153,7 +202,7 @@ export class AppController {
   /**
    * Stop the app: log the max tokens' accounts and exit if configured so
    */
-  stop(shutdown: boolean | undefined = false) {
+  private stop(shutdown: boolean | undefined = false): void {
     // Report the biggest tokens' owner per account type
     const tokenLeaderSatus = this.eventHandlerLeader.reportStatus();
     let textReport = '';
@@ -174,7 +223,7 @@ export class AppController {
    *
    * @param signal Signal at the origin of this shutdown call
    */
-  async onApplicationShutdown(signal: string) {
+  async onApplicationShutdown(signal: string): Promise<void> {
     this.logger.warn('Shutting down Main App on signal ' + signal); // e.g. "SIGINT"
 
     try {
