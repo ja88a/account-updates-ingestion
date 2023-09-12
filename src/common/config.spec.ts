@@ -7,6 +7,7 @@ describe('App Config', () => {
     expect(VALID_OPT.forbidUnknownValues).toBe(true);
     expect(VALID_OPT.whitelist).toBe(true);
     expect(VALID_OPT.forbidNonWhitelisted).toBe(true);
+    expect(VALID_OPT.skipMissingProperties).toBe(false);
 
     if (process.env.NODE_ENV == EConfigRunMode.PROD) {
       expect(VALID_OPT.stopAtFirstError).toBe(true);

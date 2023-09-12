@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { AccountHandlerCallback } from './AccountHandlerCallback';
-import { AccountType, AccountUpdate } from '../data/account-update.dto';
+import { EAccountType, AccountUpdate } from '../data/account-update.dto';
 
 describe('AccountHandlerCallback', () => {
   let service: AccountHandlerCallback;
@@ -27,7 +27,7 @@ describe('AccountHandlerCallback', () => {
 
   const validAccountUpd: AccountUpdate = {
     id: '6BhkGCMVMyrjEEkrASJcLxfAvoW43g6BubxjpeUyZFoz',
-    accountType: AccountType.ACCOUNT,
+    accountType: EAccountType.ACCOUNT,
     tokens: 100,
     callbackTimeMs: 1000,
     data: {
@@ -38,7 +38,7 @@ describe('AccountHandlerCallback', () => {
 
   const invalidAccountUpdId: AccountUpdate = {
     id: '',
-    accountType: AccountType.ACCOUNT,
+    accountType: EAccountType.ACCOUNT,
     tokens: 100,
     callbackTimeMs: 1000,
     data: {

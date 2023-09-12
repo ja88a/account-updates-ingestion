@@ -7,6 +7,7 @@ import {
   IsInt,
   IsNumber,
   IsOptional,
+  IsString,
   MaxLength,
   Min,
   MinLength,
@@ -14,7 +15,7 @@ import {
 } from 'class-validator';
 
 /** Supported Account Types */
-export enum AccountType {
+export enum EAccountType {
   ACCOUNT = 'account',
   METADATA = 'metadata',
   MINT = 'mint',
@@ -62,8 +63,11 @@ export class AccountUpdate {
 
   /** Type of the account */
   @IsDefined()
-  @IsEnum(AccountType, { message: 'Unknown Account Type' })
-  accountType!: AccountType;
+  @IsEnum(EAccountType, { message: 'Unknown Account Type' })
+  @IsString()
+  @MinLength(3)
+  @MaxLength(50)
+  accountType!: EAccountType;
 
   /** Amount of tokens in the account */
   @IsDefined()

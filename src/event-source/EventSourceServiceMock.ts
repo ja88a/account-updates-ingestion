@@ -193,7 +193,7 @@ export class EventSourceServiceMock
    * @override {@link AService.shutdown}
    */
   shutdown(signal: string): void {
-    super.shutdown(signal);
     this.stopEmittingEvents();
+    super.shutdown(signal);
   }
 }
