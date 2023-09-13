@@ -54,6 +54,13 @@ export class AccountUpdateData {
  * Account Update logged event
  */
 export class AccountUpdate {
+  /** Data model version number */
+  @IsOptional()
+  @IsNumber({ allowInfinity: false, allowNaN: false })
+  @IsInt()
+  @Min(0)
+  _version?: number = 1;
+
   /** Unique identiﬁer of the account */
   @IsDefined()
   @IsAlphanumeric()

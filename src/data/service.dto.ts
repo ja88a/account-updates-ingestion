@@ -5,6 +5,9 @@ import {
   IsBoolean,
   IsOptional,
   IsNumber,
+  IsAlphanumeric,
+  IsInt,
+  Min,
 } from 'class-validator';
 
 /**
@@ -50,4 +53,28 @@ export class AccountTypeTokenOwners {
 
   /** Sorted list of account per their owned token numbers */
   accounts: AccountToken[];
+}
+
+/**
+ *
+ */
+export class AccountTimeRange {
+  /** Unique ID of the account */
+  @IsOptional()
+  @IsAlphanumeric()
+  @MinLength(40)
+  @MaxLength(50)
+  accountId: string | undefined;
+
+  /** Range Start time, expressed in Ms */
+  @IsNumber({ allowInfinity: false, allowNaN: false })
+  @IsInt()
+  @Min(-1)
+  from: number;
+
+  /** Range End time, expressed in Ms */
+  @IsNumber({ allowInfinity: false, allowNaN: false })
+  @IsInt()
+  @Min(-1)
+  until: number;
 }
