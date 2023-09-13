@@ -1,12 +1,12 @@
 import { Module } from '@nestjs/common';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
-import { AccountHandlerCallback } from './event-handler/AccountHandlerCallback';
-import { AccountHandlerTokenLeaders } from './event-handler/AccountHandlerTokenLeaders';
-import { AccountUpdateIngestor } from './event-ingestor/AccountUpdateIngestor';
-import { EventSourceServiceMock as EventSourceService } from './event-source/EventSourceServiceMock';
+import { AppController } from './account-ingestor/app.controller';
+import { AppService } from './account-ingestor/app.service';
+import { AccountHandlerCallback } from './account-ingestor/event-handler/AccountHandlerCallback';
+import { AccountHandlerTokenLeaders } from './account-ingestor/event-handler/AccountHandlerTokenLeaders';
+import { AccountUpdateIngestor } from './account-ingestor/event-ingestor/AccountUpdateIngestor';
+import { EventSourceServiceMock as EventSourceService } from './account-ingestor/event-source/EventSourceServiceMock';
 
 /**
  * The Server Application main module.

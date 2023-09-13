@@ -1,7 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { VersioningType } from '@nestjs/common/enums/version-type.enum';
-import { MS_CONFIG } from './common/config';
+import { MS_CONFIG } from './account-ingestor/common/config';
 
 async function bootstrap() {
   // Initiate the app, with the default logger

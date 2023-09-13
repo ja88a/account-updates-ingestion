@@ -2,7 +2,7 @@ import { INestApplication, VersioningType } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import * as request from 'supertest';
 import { AppModule } from './../src/app.module';
-import { MS_CONFIG } from './../src/common/config';
+import { MS_CONFIG } from './../src/account-ingestor/common/config';
 
 const API_URI =
   '/' + MS_CONFIG.URI_DOMAIN_API + '/v' + MS_CONFIG.VERSION_PUBLIC;
