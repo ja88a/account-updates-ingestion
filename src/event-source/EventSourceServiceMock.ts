@@ -51,7 +51,7 @@ export class EventSourceServiceMock
   }
 
   /**
-   * @see {@link IEventSourceService.registerListener}
+   * @see {@link IEventSourceService}
    */
   registerListener<T>(
     eventName: EEventName,

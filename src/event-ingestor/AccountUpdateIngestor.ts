@@ -31,7 +31,14 @@ export class AccountUpdateIngestor
   private updateHandlers: IEventHandlerService[] = [];
 
   /**
-   * @see {@link IEventIngestorService.ingestAccountUpdate}
+   * Indexing of the account update.
+   *
+   * Invalid account update data are ignored.
+   * Older update versions are replaced.
+   *
+   * On the ingestion of a new account update, the registered account event handlers are triggered
+   *
+   * @see {@link IEventIngestorService}
    */
   async ingestAccountUpdate(accountEvent: AccountUpdate) {
     // Consider only valid account update events
