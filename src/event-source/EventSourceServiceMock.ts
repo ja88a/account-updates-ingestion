@@ -126,7 +126,7 @@ export class EventSourceServiceMock
   }
 
   /**
-   * Cast sequentially account update events.
+   * Cast sequentially the account update events.
    *
    * Real-time casting is simulated using a random duration between 2 events casting.
    * The provided list of events to be cast gets reduced over time, i.e. once an event is sent it is removed from the list
@@ -136,6 +136,7 @@ export class EventSourceServiceMock
     if (!accountEvents)
       throw new Error(`No Account Events provided for casting `);
 
+    // Detect when there are no more account events to be cast
     if (accountEvents.length == 0) {
       this.eventCastingTimeout = undefined;
       this.logger.warn(
@@ -155,12 +156,16 @@ export class EventSourceServiceMock
       Math.random() * EVENT_CASTING_MAX_INTERVAL_MS + 1,
     );
 
-    // Emit an event, remove the cast one from the FIFO & loop back to send next event sequentually
+    // Emit an event, remove the cast one from the FIFO & loop back to send next event sequentially
     this.eventCastingTimeout = setTimeout(() => {
       const accountEvt = accountEvents.pop();
       if (accountEvt) {
+        // Cast the account update event
         this.emitAccountEvent(accountEvt);
+        // Deal with the remaining account events
         this.castAccountEvents(accountEvents);
+      } else {
+        this.logger.warn('There is no more account update left for casting');
       }
     }, timeoutMs);
   }
@@ -170,10 +175,10 @@ export class EventSourceServiceMock
    * @param data The `data.AccountEvent` dataset to provide to listeners
    */
   private emitAccountEvent(data: AccountUpdate): boolean {
-    const result = this.eventEmitter.emit(EEventName.OC_ACCOUNT_UPDATE, data);
+    const result = this.eventEmitter.emit(EEventName.ACCOUNT_UPDATE, data);
     if (!result)
       this.logger.warn(
-        `No listeners found for events '${EEventName.OC_ACCOUNT_UPDATE}'`,
+        `No listeners found for events '${EEventName.ACCOUNT_UPDATE}'`,
       );
     return result;
   }

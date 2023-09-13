@@ -1,17 +1,17 @@
 import { MS_CONFIG } from '../common/config';
 
 /** The default HTTP source where the mock json data set is to be retrieved */
-export const MOCK_DATA = {
+export const MOCK_SRC = {
   HOST_URL: 'http://localhost:' + MS_CONFIG.PORT_EXPOSED + '/',
   FILENAME_JSON: 'coding-challenge-input.json',
 };
-export const MOCK_DATA_URL = MOCK_DATA.HOST_URL + MOCK_DATA.FILENAME_JSON;
+export const MOCK_DATA_URL = MOCK_SRC.HOST_URL + MOCK_SRC.FILENAME_JSON;
 
 /** The list of supported event names the Event Source Service can emit */
 export enum EEventName {
-  OC_ACCOUNT_UPDATE = 'account-event',
+  ACCOUNT_UPDATE = 'account-update',
   SERVICE_UPDATE = 'service-event',
-  DEFAULT = OC_ACCOUNT_UPDATE,
+  DEFAULT = ACCOUNT_UPDATE,
 }
 
 /** The maximum duration in ms between the cast of 2 successive events */
