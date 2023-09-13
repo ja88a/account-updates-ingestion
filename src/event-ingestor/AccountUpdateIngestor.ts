@@ -92,12 +92,10 @@ export class AccountUpdateIngestor
   /**
    * @see {@link IService.reportStatus}
    * @override {@link AService.reportStatus}
-   * @returns The complete list of accounts and their last indexed update info
+   * @returns The complete list of accounts' last indexed update
    */
-  reportStatus(): Array<{ accountId: string; lastUpdate: AccountUpdate }> {
-    return Array.from(this.accounts, function (entry) {
-      return { accountId: entry[0], lastUpdate: entry[1] };
-    });
+  reportStatus(): AccountUpdate[] {
+    return Array.from(this.accounts.values());
   }
 
   /**

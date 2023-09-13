@@ -24,7 +24,7 @@ export const MS_CONFIG = {
   /**
    * Specify if the server app should automatically shutdown by default, when the service gets inactive
    */
-  EXIT_ON_STOP: true,
+  EXIT_ON_STOP: false,
 };
 
 /**

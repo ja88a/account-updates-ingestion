@@ -42,7 +42,9 @@ describe('AppController', () => {
     it('should return a JSON data set', () => {
       const appStatusReport = appController.getStatus();
       expect(appStatusReport.accounts).toBeDefined();
-      expect(appStatusReport.leaderboard).toBeDefined();
+      expect(appStatusReport.maxtokens).toBeDefined();
+      expect(appStatusReport.maxtokens.history).toBeDefined();
+      expect(appStatusReport.maxtokens.leaderboard).toBeDefined();
       expect(appStatusReport.pending).toBeDefined();
     });
   });

@@ -1,10 +1,15 @@
-import { Controller, Get, Put } from '@nestjs/common';
+import { Controller, Get, Param, Put } from '@nestjs/common';
 import { AppService } from './app.service';
 import Logger from './utils/logger';
 
 import { exit } from 'process';
 import { MS_CONFIG } from './common/config';
-import { ServiceStatusEvent } from './data/service.dto';
+import {
+  AccountTimeRange,
+  AccountTypeTokenOwners,
+  AccountTypeTopTokenOwnerHistory,
+  ServiceStatusEvent,
+} from './data/service.dto';
 import { AccountHandlerCallback } from './event-handler/AccountHandlerCallback';
 import { AccountHandlerTokenLeaders } from './event-handler/AccountHandlerTokenLeaders';
 import { AccountUpdateIngestor } from './event-ingestor/AccountUpdateIngestor';
@@ -13,6 +18,7 @@ import {
   EventSourceServiceMock,
 } from './event-source/EventSourceServiceMock';
 import { EEventName } from './event-source/constants';
+import { AccountUpdate } from './data/account-update.dto';
 
 /**
  * Main controller of the application, responsible for the binding of available services
@@ -58,10 +64,17 @@ export class AppController {
    * the max tokens (`leaderboard`) and the number of callbacks `pending` to be triggered with the associated source accounts
    */
   @Get('/status')
-  getStatus(): { accounts: any[]; leaderboard: any[]; pending: any } {
+  getStatus(): {
+    accounts: AccountUpdate[];
+    maxtokens: {
+      leaderboard: AccountTypeTokenOwners[];
+      history: AccountTypeTopTokenOwnerHistory[];
+    };
+    pending: any;
+  } {
     return {
       accounts: this.eventIngestor.reportStatus(),
-      leaderboard: this.eventHandlerLeader.reportStatus(),
+      maxtokens: this.eventHandlerLeader.reportStatus(),
       pending: this.eventHandlerCallback.reportStatus(),
     };
   }
@@ -71,11 +84,25 @@ export class AppController {
    * It is designed as a basic leaderboard.
    *
    * Note: the provided account types must be known in advance, else dynamically discovered.
-   * @returns a list of account types with their associated top owners of tokens
+   * @returns a list of account types with their associated top token owners
    */
   @Get('/leaderboard')
   getLeaderboard(): any {
     return this.eventHandlerLeader.reportLeaderboard();
+  }
+
+  /**
+   * Retrieve the account that owned the max number of token at a given time
+   * @param accountType The type of the account. Refer to {@link EAccountType} for a list of official ones
+   * @param timems The timestamp expressed in ms: Unix epoch time
+   * @return The account ID, if any is known at that time, as well as the time range during which the account was the top tokens owner
+   */
+  @Get('/accounts/tokenmaxowner/:accountType/:time')
+  getAccountWithMaxTokens(
+    @Param('accountType') accountType: string,
+    @Param('time') timems: number,
+  ): AccountTimeRange {
+    return this.eventHandlerLeader.retrieveTopOwnerAtTime(accountType, timems);
   }
 
   /**
@@ -140,7 +167,7 @@ export class AppController {
 
     // Register the Account Update Ingesting service to handle corresponding events
     this.eventSource.registerListener(
-      EEventName.OC_ACCOUNT_UPDATE,
+      EEventName.ACCOUNT_UPDATE,
       this.eventIngestor.ingestAccountUpdate,
       this.eventIngestor,
     );
@@ -205,7 +232,7 @@ export class AppController {
    */
   private stop(shutdown: boolean | undefined = false): void {
     // Report the biggest tokens' owner per account type
-    const tokenLeaderSatus = this.eventHandlerLeader.reportStatus();
+    const tokenLeaderSatus = this.eventHandlerLeader.reportStatus().leaderboard;
     let textReport = '';
     tokenLeaderSatus.forEach((entry) => {
       textReport += `\t${entry.type}\t${entry.type.length < 8 ? '\t' : ''}${
