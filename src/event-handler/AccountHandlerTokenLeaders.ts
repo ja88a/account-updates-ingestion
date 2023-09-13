@@ -1,19 +1,20 @@
 import { Injectable } from '@nestjs/common';
 import { IEventHandlerService } from './IEventHandlerService';
 import AService from '../common/service/AService';
-import { AccountUpdate, EAccountType } from '../data/account-update.dto';
+import { AccountUpdate } from '../data/account-update.dto';
 import {
+  AccountTime,
   AccountTimeRange,
   AccountToken,
   AccountTypeTokenOwners,
+  AccountTypeTopTokenOwnerHistory,
 } from '../data/service.dto';
 import { searchInsert } from '../utils';
-
-/** Max number of leaders (account with max tokens) to keep track of, per account type */
-const LEADERBOARD_SIZE = 3;
-const LEADERBOARD_SIZE_BUFFER = 2;
-
-const TOP_OWNERS_HISTORY_MAX_SIZE = 200;
+import {
+  LEADERBOARD_LIST_SIZE,
+  LEADERBOARD_SIZE_BUFFER,
+  TOP_OWNERS_HISTORY_MAX_SIZE,
+} from './constants';
 
 /**
  * Manages a leaderboard of updated accounts having the max number of tokens,
@@ -28,10 +29,7 @@ export class AccountHandlerTokenLeaders
   private maxTokenOwners: Map<string, AccountToken[]> = new Map();
 
   /** Keep track of the max tokens' account over time, per account type */
-  private topOwnerOverTime: Map<
-    string,
-    { accountId: string; startTime: number }[]
-  > = new Map();
+  private topOwnerOverTime: Map<string, AccountTime[]> = new Map();
 
   /**
    * Manages the list of accounts representing the top token holders (known ones)
@@ -77,7 +75,7 @@ export class AccountHandlerTokenLeaders
     if (!recorded) {
       if (
         accountTypeLeaders.length <
-        LEADERBOARD_SIZE + LEADERBOARD_SIZE_BUFFER
+        LEADERBOARD_LIST_SIZE + LEADERBOARD_SIZE_BUFFER
       ) {
         // First entries, free room left
         this.insertLeader(
@@ -104,20 +102,24 @@ export class AccountHandlerTokenLeaders
         a.tokens < b.tokens ? 1 : a.tokens > b.tokens ? -1 : 0,
       );
 
-      /// Track if it deals with the new top owner, if so record it
+      /// Track if it deals with the new tokens' top owner, if so record it
 
       const topAccountId = accountTypeLeaders[0].id;
       let topOwnerHistory = this.topOwnerOverTime.get(accountType);
 
       let lastTopOwner: string | undefined = undefined;
-      if (topOwnerHistory == undefined) topOwnerHistory = [];
+      if (topOwnerHistory == undefined) {
+        topOwnerHistory = [];
+        this.topOwnerOverTime.set(accountType, topOwnerHistory);
+      }
+      // Get the latest
       else lastTopOwner = topOwnerHistory[topOwnerHistory.length - 1].accountId;
 
       if (lastTopOwner !== topAccountId) {
         // Append at the end the new top owner entry
         topOwnerHistory.push({
           accountId: topAccountId,
-          startTime: new Date().getMilliseconds(),
+          from: new Date().getTime(),
         });
 
         // Limit the Map size
@@ -132,12 +134,12 @@ export class AccountHandlerTokenLeaders
   /**
    * Retrieve which account was the top tokens' owner at a given time, for a specific account type
    *
-   * @param accountType The type of account
+   * @param accountType The type of account. Refer to `EAccountType` for samples.
    * @param timeMs The time expressed using the Unix timestamp format (epoch, Ms)
    * @returns ID the account, if found, and corresponding top owner's time period
    */
   retrieveTopOwnerAtTime(
-    accountType: EAccountType,
+    accountType: string,
     timeMs: number,
   ): AccountTimeRange {
     let accountId = undefined;
@@ -149,17 +151,16 @@ export class AccountHandlerTokenLeaders
       // Prepare
       const startTimes: number[] = [];
       topOwnerHistory.forEach((entry) => {
-        startTimes.push(entry.startTime);
+        startTimes.push(entry.from);
       });
 
-      // Search
+      // Binary search of an insertion position in the naturally sorted array (ascending time order: last entry is the latest record)
       const index = searchInsert(startTimes, timeMs);
       if (index > 0) {
         // Extract the info
-        accountId = topOwnerHistory[index].accountId;
-        from = topOwnerHistory[index].startTime;
-        if (index < startTimes.length - 1)
-          until = topOwnerHistory[index + 1].startTime;
+        accountId = topOwnerHistory[index - 1].accountId;
+        from = topOwnerHistory[index - 1].from;
+        if (index < startTimes.length) until = topOwnerHistory[index].from;
       }
     }
     return {
@@ -179,12 +180,20 @@ export class AccountHandlerTokenLeaders
     accountToken: AccountToken,
     accountTypeLeaders: AccountToken[],
   ): AccountToken[] {
+    // Append to the end of the list
     accountTypeLeaders.push(accountToken);
+    // Sort: descending order based on the number of tokens
     accountTypeLeaders.sort((a, b) =>
       a.tokens < b.tokens ? 1 : a.tokens > b.tokens ? -1 : 0,
     );
-    if (accountTypeLeaders.length > LEADERBOARD_SIZE + LEADERBOARD_SIZE_BUFFER)
+
+    // Limit the list size
+    if (
+      accountTypeLeaders.length >
+      LEADERBOARD_LIST_SIZE + LEADERBOARD_SIZE_BUFFER
+    )
       accountTypeLeaders.pop();
+
     return accountTypeLeaders;
   }
 
@@ -196,7 +205,7 @@ export class AccountHandlerTokenLeaders
     const accountTypeTokenTopOwners = {};
     for (const entry of this.maxTokenOwners.entries()) {
       Object.assign(accountTypeTokenTopOwners, {
-        [entry[0]]: entry[1],
+        [entry[0]]: entry[1].slice(0, LEADERBOARD_LIST_SIZE),
       });
     }
     return accountTypeTokenTopOwners;
@@ -206,16 +215,32 @@ export class AccountHandlerTokenLeaders
    * Generate a report about the accounts having the highest number of tokens
    * @returns A list of accounts owning the max number of tokens, for each registered account type
    */
-  reportStatus(): AccountTypeTokenOwners[] {
+  reportStatus(): {
+    leaderboard: AccountTypeTokenOwners[];
+    history: AccountTypeTopTokenOwnerHistory[];
+  } {
+    // Leaderboard
     const accountTypeTokenTopOwners: AccountTypeTokenOwners[] = [];
     for (const entry of this.maxTokenOwners.entries()) {
       const newEntry = {
         type: entry[0],
-        accounts: entry[1],
+        accounts: entry[1].slice(0, LEADERBOARD_LIST_SIZE),
       };
       accountTypeTokenTopOwners.push(newEntry);
     }
-    return accountTypeTokenTopOwners;
+    // History of the top 1 owners
+    const accountTypeTopOwnerOverTime: AccountTypeTopTokenOwnerHistory[] = [];
+    for (const entry of this.topOwnerOverTime.entries()) {
+      const newEntry = {
+        type: entry[0],
+        history: entry[1],
+      };
+      accountTypeTopOwnerOverTime.push(newEntry);
+    }
+    return {
+      leaderboard: accountTypeTokenTopOwners,
+      history: accountTypeTopOwnerOverTime,
+    };
   }
 
   /**

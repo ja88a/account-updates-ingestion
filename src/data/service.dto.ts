@@ -1,3 +1,4 @@
+import { Type } from 'class-transformer';
 import {
   IsDefined,
   MinLength,
@@ -8,7 +9,11 @@ import {
   IsAlphanumeric,
   IsInt,
   Min,
+  IsArray,
+  ValidateNested,
+  IsString,
 } from 'class-validator';
+import { LEADERBOARD_LIST_SIZE } from '../event-handler/constants';
 
 /**
  * Event structure for communicating about a service status
@@ -37,6 +42,10 @@ export class ServiceStatusEvent {
  */
 export class AccountToken {
   /** Account ID */
+  @IsDefined()
+  @IsAlphanumeric()
+  @MinLength(40)
+  @MaxLength(50)
   id: string;
 
   /** Number of tokens */
@@ -44,21 +53,26 @@ export class AccountToken {
 }
 
 /**
- * Functional data structure used to report a leaderboard
- * of tokens' top owners, per account type
+ * Functional data structure used to report a list
+ * of tokens' owners, for a given account type
  */
 export class AccountTypeTokenOwners {
   /** Account type */
+  @IsDefined()
+  @IsString()
+  @MaxLength(40)
   type!: string;
 
   /** Sorted list of account per their owned token numbers */
+  @IsDefined()
+  @IsArray()
+  @MaxLength(LEADERBOARD_LIST_SIZE)
+  @ValidateNested()
+  @Type(() => AccountToken)
   accounts: AccountToken[];
 }
 
-/**
- *
- */
-export class AccountTimeRange {
+export class AccountTime {
   /** Unique ID of the account */
   @IsOptional()
   @IsAlphanumeric()
@@ -66,15 +80,31 @@ export class AccountTimeRange {
   @MaxLength(50)
   accountId: string | undefined;
 
-  /** Range Start time, expressed in Ms */
+  /** Start time, expressed in Ms */
   @IsNumber({ allowInfinity: false, allowNaN: false })
   @IsInt()
   @Min(-1)
   from: number;
+}
 
+/**
+ *
+ */
+export class AccountTimeRange extends AccountTime {
   /** Range End time, expressed in Ms */
   @IsNumber({ allowInfinity: false, allowNaN: false })
   @IsInt()
   @Min(-1)
   until: number;
+}
+
+/**
+ * The history of the max token owners over time, per account type
+ */
+export class AccountTypeTopTokenOwnerHistory {
+  /** Account type */
+  type: string;
+
+  /** List of the account top owners over time */
+  history: AccountTime[];
 }
