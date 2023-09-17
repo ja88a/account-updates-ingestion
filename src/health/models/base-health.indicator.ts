@@ -3,13 +3,16 @@ import {
   PrometheusHistogram,
   PrometheusService,
 } from '../../prometheus/prometheus.service';
-import { Logger } from '@nestjs/common';
 import { Gauge } from 'prom-client';
+import Logger from '../../common/logger';
 
 // Design Pattern: Template Method
 
 const TAG = 'HealthCheck';
 
+/**
+ * Abstract base implementation of the Health Indicator
+ */
 export abstract class BaseHealthIndicator extends HealthIndicator {
   public abstract name: string;
   public callMetrics: any;
@@ -24,9 +27,18 @@ export abstract class BaseHealthIndicator extends HealthIndicator {
   private gaugesRegistered = false;
   private gauge: Gauge<string> | undefined;
 
+  /** Logger */
+  private readonly logger = Logger.child({
+    label: this.constructor.name,
+  });
+
   protected registerMetrics(): void {
     if (this.promClientService) {
-      Logger.log('Register metrics histogram for: ' + this.name, TAG, true);
+      this.logger.info(
+        'Register metrics histogram for: ' + this.name,
+        TAG,
+        true,
+      );
       this.metricsRegistered = true;
       const histogram: PrometheusHistogram =
         this.promClientService.registerMetrics(
@@ -41,7 +53,7 @@ export abstract class BaseHealthIndicator extends HealthIndicator {
 
   protected registerGauges(): void {
     if (this.promClientService) {
-      Logger.log('Register metrics gauge for: ' + this.name, TAG, true);
+      this.logger.info('Register metrics gauge for: ' + this.name, TAG, true);
       this.gaugesRegistered = true;
       this.gauge = this.promClientService.registerGauge(this.name, this.help);
     }
@@ -54,7 +66,7 @@ export abstract class BaseHealthIndicator extends HealthIndicator {
   public updatePrometheusData(isConnected: boolean): void {
     if (this.stateIsConnected !== isConnected) {
       if (isConnected) {
-        Logger.log(this.name + ' is available', TAG, true);
+        this.logger.info(this.name + ' is available', TAG, true);
       }
 
       this.stateIsConnected = isConnected;

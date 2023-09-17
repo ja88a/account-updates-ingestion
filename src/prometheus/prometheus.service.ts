@@ -13,8 +13,8 @@ interface IMapGauge {
 
 @Injectable()
 export class PrometheusService {
-  private readonly serviceTitle = 'Backend-For-Frontend';
-  private readonly servicePrefix = 'FrontendMetrics_';
+  private readonly serviceTitle = 'AccountUpdateIngestionServer';
+  private readonly servicePrefix = 'IngestorMetrics_';
   private registeredMetrics: IMapHistogram = {};
   private registeredGauges: IMapGauge = {};
   private readonly registry: Registry;
