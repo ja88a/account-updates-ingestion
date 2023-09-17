@@ -1,7 +1,7 @@
 import { ValidationError } from 'class-validator';
 import { AccountUpdate } from '../../data/account-update.dto';
 import { AccountUpdateValidator } from '../../data/class-validator';
-import Logger from '../../utils/logger';
+import Logger from '../../../common/logger';
 import { IService } from './IService';
 
 /**

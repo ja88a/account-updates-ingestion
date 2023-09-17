@@ -1,8 +1,8 @@
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { Test, TestingModule } from '@nestjs/testing';
 import { join } from 'path';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
+import { AccountIngestorController } from './ingestor.controller';
+import { AccountIngestorService } from './ingestor.service';
 import { AccountHandlerCallback } from './event-handler/AccountHandlerCallback';
 import { AccountHandlerTokenLeaders } from './event-handler/AccountHandlerTokenLeaders';
 import { AccountUpdateIngestor } from './event-ingestor/AccountUpdateIngestor';
@@ -10,7 +10,7 @@ import { EventSourceServiceMock } from './event-source/EventSourceServiceMock';
 import { EAccountType } from './data/account-update.dto';
 
 describe('AppController', () => {
-  let appController: AppController;
+  let appController: AccountIngestorController;
 
   beforeEach(async () => {
     const app: TestingModule = await Test.createTestingModule({
@@ -19,9 +19,9 @@ describe('AppController', () => {
           rootPath: join(__dirname, '..', 'static'),
         }),
       ],
-      controllers: [AppController],
+      controllers: [AccountIngestorController],
       providers: [
-        AppService,
+        AccountIngestorService,
         EventSourceServiceMock,
         AccountUpdateIngestor,
         AccountHandlerCallback,
@@ -29,7 +29,9 @@ describe('AppController', () => {
       ],
     }).compile();
 
-    appController = app.get<AppController>(AppController);
+    appController = app.get<AccountIngestorController>(
+      AccountIngestorController,
+    );
   });
 
   describe('Getting the Service Ping', () => {

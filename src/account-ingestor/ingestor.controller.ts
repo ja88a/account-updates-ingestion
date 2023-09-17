@@ -1,9 +1,9 @@
 import { Controller, Get, Param, Put } from '@nestjs/common';
-import { AppService } from './app.service';
-import Logger from './utils/logger';
+import { AccountIngestorService } from './ingestor.service';
+import Logger from '../common/logger';
 
 import { exit } from 'process';
-import { MS_CONFIG } from './common/config';
+import { MS_CONFIG } from '../common/config';
 import {
   AccountTimeRange,
   AccountTypeTokenOwners,
@@ -30,10 +30,10 @@ import { AccountUpdate } from './data/account-update.dto';
   version: MS_CONFIG.VERSION_PUBLIC,
   path: '',
 })
-export class AppController {
+export class AccountIngestorController {
   /** Logger */
   private readonly logger = Logger.child({
-    label: AppController.name,
+    label: AccountIngestorController.name,
   });
 
   /**
@@ -42,7 +42,7 @@ export class AppController {
    * Benefits from nestjs module's injections @see app.module
    */
   constructor(
-    private readonly appService: AppService,
+    private readonly appService: AccountIngestorService,
     private readonly eventSource: EventSourceService,
     private readonly eventIngestor: AccountUpdateIngestor,
     private readonly eventHandlerCallback: AccountHandlerCallback,
@@ -55,7 +55,7 @@ export class AppController {
    */
   @Get('/ping')
   getPing(): boolean {
-    return true;
+    return this.appService?.isConnected();
   }
 
   /**

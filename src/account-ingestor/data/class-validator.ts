@@ -1,7 +1,7 @@
 import { ValidationError, validate } from 'class-validator';
-import { VALID_OPT } from '../common/config';
+import { VALID_OPT } from '../../common/config';
 import { AccountUpdate } from './account-update.dto';
-import Logger from '../utils/logger';
+import Logger from '../../common/logger';
 
 export class AccountUpdateValidator {
   /** Logger */

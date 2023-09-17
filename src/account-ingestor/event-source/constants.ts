@@ -1,4 +1,4 @@
-import { MS_CONFIG } from '../common/config';
+import { MS_CONFIG } from '../../common/config';
 
 /** The default HTTP source where the mock json data set is to be retrieved */
 export const MOCK_SRC = {

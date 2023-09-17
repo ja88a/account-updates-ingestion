@@ -1,11 +1,11 @@
 import { Injectable } from '@nestjs/common';
-import Logger from './utils/logger';
+import Logger from '../common/logger';
 
 @Injectable()
-export class AppService {
+export class AccountIngestorService {
   /** Logger */
   private readonly logger = Logger.child({
-    label: AppService.name,
+    label: AccountIngestorService.name,
   });
 
   /**
@@ -18,6 +18,10 @@ export class AppService {
       '<img src="/diag/arch-overview_diag01bt.png"/>' +
       '<div><a href="/leaderboard">Leaderboard</div></body></html>'
     );
+  }
+
+  public isConnected(): boolean {
+    return true;
   }
 
   /**

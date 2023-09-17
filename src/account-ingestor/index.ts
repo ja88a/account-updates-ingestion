@@ -1,5 +1,6 @@
-export * from './app.controller';
-export * from './app.service';
+export * from './ingestor.module';
+export * from './ingestor.controller';
+export * from './ingestor.service';
 export * as common from './common';
 export * as data from './data';
 export * as utils from './utils';

@@ -1,12 +1,11 @@
 import { Module } from '@nestjs/common';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
-import { AppController } from './account-ingestor/app.controller';
-import { AppService } from './account-ingestor/app.service';
-import { AccountHandlerCallback } from './account-ingestor/event-handler/AccountHandlerCallback';
-import { AccountHandlerTokenLeaders } from './account-ingestor/event-handler/AccountHandlerTokenLeaders';
-import { AccountUpdateIngestor } from './account-ingestor/event-ingestor/AccountUpdateIngestor';
-import { EventSourceServiceMock as EventSourceService } from './account-ingestor/event-source/EventSourceServiceMock';
+import { AccountIngestorModule } from './account-ingestor/ingestor.module';
+import { HealthModule } from './health/health.module';
+import { MetricsModule } from './metrics/metrics.module';
+import { PrometheusModule } from './prometheus/prometheus.module';
+import { ConfigModule } from '@nestjs/config';
 
 /**
  * The Server Application main module.
@@ -18,14 +17,13 @@ import { EventSourceServiceMock as EventSourceService } from './account-ingestor
     ServeStaticModule.forRoot({
       rootPath: join(__dirname, '..', 'static'),
     }),
+    ConfigModule.forRoot({ cache: true }),
+    HealthModule,
+    PrometheusModule,
+    AccountIngestorModule,
+    MetricsModule,
   ],
-  controllers: [AppController],
-  providers: [
-    AppService,
-    EventSourceService,
-    AccountUpdateIngestor,
-    AccountHandlerCallback,
-    AccountHandlerTokenLeaders,
-  ],
+  controllers: [],
+  providers: [],
 })
 export class AppModule {}
