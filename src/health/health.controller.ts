@@ -1,6 +1,6 @@
 import { Controller, Get, ServiceUnavailableException } from '@nestjs/common';
 import { HealthService } from './health.service';
-import { HealthCheckResult } from '@nestjs/terminus';
+import { HealthCheckResult, HealthCheck } from '@nestjs/terminus';
 import { MS_CONFIG } from '../common/config';
 
 @Controller({
@@ -11,6 +11,7 @@ export class HealthController {
   constructor(private healthService: HealthService) {}
 
   @Get()
+  @HealthCheck()
   public async check(): Promise<HealthCheckResult | undefined> {
     const healthCheckResult: HealthCheckResult | undefined =
       await this.healthService.check();

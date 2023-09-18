@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import {
   HealthCheck,
   HealthCheckResult,
@@ -10,16 +10,22 @@ import { IHealthIndicator } from './interfaces/health-indicator.interface';
 import { NestjsHealthIndicator } from './models/nestjs-health.indicator';
 import { AccountIngestorHealthIndicator } from './models/account-ingestor.indicator';
 import { AccountIngestorService } from '../account-ingestor';
+import Logger from '../common/logger';
 
 @Injectable()
 export class HealthService {
+  /** Logger */
+  private readonly logger = Logger.child({
+    label: HealthService.name,
+  });
+
   private readonly listOfThingsToMonitor: IHealthIndicator[];
 
   constructor(
     private health: HealthCheckService,
     private http: HttpHealthIndicator,
     private promClientService: PrometheusService,
-    private anyOtherService: AccountIngestorService,
+    private accountIngestorService: AccountIngestorService,
   ) {
     this.listOfThingsToMonitor = [
       new NestjsHealthIndicator(
@@ -28,7 +34,7 @@ export class HealthService {
         this.promClientService,
       ),
       new AccountIngestorHealthIndicator(
-        this.anyOtherService,
+        this.accountIngestorService,
         this.promClientService,
       ),
     ];
@@ -42,7 +48,7 @@ export class HealthService {
           try {
             return await apiIndicator.isHealthy();
           } catch (e) {
-            Logger.warn(e);
+            this.logger.warn(e);
             return apiIndicator.reportUnhealthy();
           }
         },
