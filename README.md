@@ -142,6 +142,38 @@ Clean up your local Docker image & container registry:
 $ pnpm docker:cleanup
 ```
 
+## Monitoring
+
+Default API URLs are 
+* `http://localhost:3000/api/v1/metrics` for metrics 
+
+* `http://localhost:3000/api/v1/health` for the healthcheck
+
+### Monitoring Stack
+
+You can use Docker Compose to quickly launch the app server along with a Prometheus & a Grafana nodes.
+
+Run the Prometheus and Grafana containers locally:
+```bash
+docker-compose up
+```
+
+### Prometheus
+
+Prometheus configuration is available in [promotheus.yml](./monitoring/prometheus/prometheus.yml)
+
+Promotheus Web UI: [localhost:9090](http://localhost:9090)
+
+### Grafana
+
+Grafana main configurations:
+* General [monitoring config](./monitoring/grafana/config.monitoring)
+* Provisioning [datasource](./monitoring/grafana/provisioning/datasources/datasource.yml)
+
+Grafana Web UI: [localhost:3000](http://localhost:3000) (default user is `admin`, see the enironment [config](./monitoring/grafana/config.monitoring) file)
+
+
+
 ## Architecture
 ### Key drivers
 
@@ -150,7 +182,7 @@ While this is a demo application, the design of this app meets the following fun
   * The service must be **scalable**: support for vertical & horizontal scaling; low CPU & memory footprint; high throuput & low response time; extensive usage of async supports and concurrency considerations
   * The service must be **secure**: low network exposure; systematic external inputs validation; lowest trust even among internal services; clean errors management, based on exceptions propagation
 
-Actual system has been divided into 3 main business area (and corresponding service types):
+Actual system has been divided into 3 main service area (and corresponding service types):
 1. Handling the external source of data events
 2. Ingestion of the information, account updates here (logged onchain events), for their indexing, validation/filtering, transformation, persistence management, etc and moreover enabling their further processing by specifc handlers
 3. Handling specific processing of ingested events: triggering further handling per the event type, tracking and managing statistics, etc
