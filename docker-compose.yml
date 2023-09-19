@@ -1,4 +1,4 @@
-version: "3.7"
+version: '3.7'
 
 volumes:
     prometheus_data: {}
@@ -19,14 +19,41 @@ services:
       - '--storage.tsdb.path=/prometheus'
       - '--web.console.libraries=/usr/share/prometheus/console_libraries'
       - '--web.console.templates=/usr/share/prometheus/consoles'
+      - '--web.enable-lifecycle'
+      - '--web.enable-admin-api'
     ports:
-      - '9090:9090'
+      - 9090:9090
     networks:
       - back-tier
     restart: always
 
+  node-exporter:
+    image: prom/node-exporter:latest
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+      # - /:/host:ro,rslave
+    command: 
+      # - '--path.rootfs=/host'
+      - '--path.procfs=/host/proc' 
+      - '--path.sysfs=/host/sys'
+      - --collector.filesystem.ignored-mount-points
+      - "^/(sys|proc|dev|host|etc|rootfs/var/lib/docker/containers|rootfs/var/lib/docker/overlay2|rootfs/run/docker/netns|rootfs/var/lib/docker/aufs)($$|/)"
+    ports:
+      - 9100:9100
+    networks:
+      - back-tier
+    deploy:
+      mode: global
+      restart_policy:
+        condition: on-failure
+    # network_mode: host
+    # pid: host
+    restart: unless-stopped
+
   grafana:
-    image: grafana/grafana:latest
+    image: grafana/grafana:9.4.14
     container_name: monitoring_grafana
     user: "472"
     depends_on:
@@ -45,40 +72,13 @@ services:
       - front-tier
     restart: unless-stopped
 
-  # node-exporter:
-  #   image: quay.io/prometheus/node-exporter:latest
-  #   container_name: node_exporter
-  #   volumes:
-  #     - /proc:/host/proc:ro
-  #     - /sys:/host/sys:ro
-  #     - /:/rootfs:ro
-  #     - /:/host:ro,rslave
-  #   command: 
-  #     - '--path.rootfs=/host'
-  #     - '--path.procfs=/host/proc' 
-  #     - '--path.sysfs=/host/sys'
-  #     - --collector.filesystem.ignored-mount-points
-  #     - "^/(sys|proc|dev|host|etc|rootfs/var/lib/docker/containers|rootfs/var/lib/docker/overlay2|rootfs/run/docker/netns|rootfs/var/lib/docker/aufs)($$|/)"
-  #   ports:
-  #     - 9100:9100
-  #   networks:
-  #     - back-tier
-  #   restart: always
-  #   deploy:
-  #     mode: global
-  #   network_mode: host
-  #   pid: host
-  #   restart: unless-stopped
-  #   volumes:
-  #     - '/:/host:ro,rslave'
-
   ingestor:
     build:
       context: .
-    container_name: account-ingestor
-    image: json-stream-proc
+    container_name: ingestor
+    image: account-ingestor
     ports:
-      - "8080:3000"
+      - '8090:3000'
     networks:
       - back-tier
       - front-tier
