@@ -8,6 +8,7 @@ Solana account updates are considered, being streamed continuously in a real tim
 
 This project demonstrates possible techniques for ingesting data & handling their further processing. Moreover it emphasizes on good software development practices, in terms of tooling, architecture and functionnal design to implement a production-ready app server.
 
+
 ## Tech requirements
 
 The [pnpm](https://pnpm.io/) package manager for Node.js is used & recommended, however it can be replaced by [yarn](https://yarnpkg.com/). You can even stick to [npm](https://), just use `npm run X` instead of `pnpm X` in the below commands.
@@ -273,17 +274,17 @@ One main application module has been considered on top of 3 main types of servic
     * Binding the services together by registering services or callbacks among each other
     * Exposing a REST API for reporting the application status and service info to remote clients
 
-    Application Controller implementation: [app.controller.ts](./src/app.controller.ts)
+    Application Controller implementation: [app.controller.ts](./src/account-ingestor/app.controller.ts)
 
 2. Service **Data Source Handler**: An adaptor responsible for monitoring (pulling/listening) an external source of events, validating these inputs and reporting them internally for their ingestion by the system.
     
     It can consist in a client listening to a message queuing system, or polling a DB or API (REST http / RPC).
 
-    Service interface: [IEventSourceService](./src/event-source/IEventSourceService.ts)
+    Service interface: [IEventSourceService](./src/account-ingestor/event-source/IEventSourceService.ts)
 
     The implemented event casting emulator fetch (http GET) a JSON file, transform and validate the account update events using a Code-as-Schema approach where the fields & values are constrained. Then the entries are scheduled to be sequentially cast through an event emitter channel, to which events listener services can subscribe their callback method to further process the data.
 
-    For the events sourcing emulator, refer to [EventSourceServiceMock](./src/event-source/EventSourceServiceMock.ts)
+    For the events sourcing emulator, refer to [EventSourceServiceMock](./src/account-ingestor/event-source/EventSourceServiceMock.ts)
 
 3. Service **Events Ingestor**: A service registering its event-specific callback(s) to a data source handler to ingest imported events data.
 
@@ -291,9 +292,9 @@ One main application module has been considered on top of 3 main types of servic
 
     Events data are validated, ignored if considered as invalid (missing or unknown field or value) and then indexed in memory, while a remote persistent storage might be considered. Once an account update is ingested, the registered handlers for account updates have their dedicated callback triggered.
 
-    Service interface: [IEventIngestorService](./src/event-ingestor/IEventIngestorService.ts)
+    Service interface: [IEventIngestorService](./src/account-ingestor/event-ingestor/IEventIngestorService.ts)
 
-    Account Update Ingestor implementation: refer to [AccountUpdateIngestor](./src/event-ingestor/AccountUpdateIngestor.ts)
+    Account Update Ingestor implementation: refer to [AccountUpdateIngestor](./src/account-ingestor/event-ingestor/AccountUpdateIngestor.ts)
 
 4. Service **Events Handler**: Services responsible for performing specific handling of ingested event, per their type & info.
 
@@ -303,11 +304,11 @@ One main application module has been considered on top of 3 main types of servic
     * one dedicated to triggering callbacks, which expiration time is expressed by the Account Update events
     * another is dedicated to maintaining a minimum leaderboard/tracking of the accounts owning the most tokens, grouped per account types
 
-    Service interface: [IEventHandlerService](./src/event-handler/IEventHandlerService.ts)
+    Service interface: [IEventHandlerService](./src/account-ingestor/event-handler/IEventHandlerService.ts)
     
-    Account Update Handler for Callbacks: [AccountHandlerCallback](./src/event-handler/AccountHandlerCallback.ts)
+    Account Update Handler for Callbacks: [AccountHandlerCallback](./src/account-ingestor/event-handler/AccountHandlerCallback.ts)
         
-    Account Update Handler for tracking accounts' max tokens holding: [AccountHandlerTokenLeaders](./src/event-handler/AccountHandlerTokenLeaders.ts)
+    Account Update Handler for tracking accounts' max tokens holding: [AccountHandlerTokenLeaders](./src/account-ingestor/event-handler/AccountHandlerTokenLeaders.ts)
 
 
 ### Design patterns
@@ -322,7 +323,7 @@ To lower down the dependency among services, they don't communicate directly to 
 * EventEmitter-based technique for Ingestors to register their callback to be triggered on a given event name
 * Interface method direct registration for Events handlers callback to be triggered by Ingestor services compatible with the event type (payload)
 
-Refer to the operated binding of services in [AppController.bindServices()](./src/app.controller.ts).
+Refer to the operated binding of services in [AppController.bindServices()](./src/account-ingestor/ingestor.controller.ts).
 
 #### Delaying
 
@@ -330,7 +331,7 @@ In order to schedule/delay an async action (e.g. casting next account update eve
 
 #### Validating
 
-A Code-as-Schema approach has been opted to validate and filter out problematic account update events. The implemented technique is based on [class-validator](https://www.npmjs.com/package/class-validator). Fields and values are checked per the constrained implemented for example in [account-update.dto.ts](./src/data/account-update.dto.ts).
+A Code-as-Schema approach has been opted to validate and filter out problematic account update events. The implemented technique is based on [class-validator](https://www.npmjs.com/package/class-validator). Fields and values are checked per the constrained implemented for example in [account-update.dto.ts](./src/account-ingestor/data/account-update.dto.ts).
 
 
 ### Technical considerations
