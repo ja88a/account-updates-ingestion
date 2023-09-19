@@ -1,12 +1,12 @@
-# Ingestion and Handling of live on-chain events
+# Ingestion and Handling of on-chain Account Update events
 
 ## Description
 
-Purpose: Simulation of the casting, ingestion & handling of accounts' update events issued from a blockchain.
+Purpose: Simulation of the casting, ingestion & handling of accounts' update events issued by a blockchain logging events.
 
 Solana account updates are considered, being streamed continuously in a real time system. In the context of this project, the casting of logged account updates is emulated: a static JSON file is loaded (made of +100 entries) and their casting is made sequentially, based on random time intervals.
 
-This project demonstrates possible techniques for ingesting data & handling their further processing. Moreover it emphasizes on good software development practices, in terms of tooling, architecture and functionnal design to address a production-ready service.
+This project demonstrates possible techniques for ingesting data & handling their further processing. Moreover it emphasizes on good software development practices, in terms of tooling, architecture and functionnal design to implement a production-ready app server.
 
 ## Tech requirements
 
@@ -223,7 +223,7 @@ In order to further feed our [Prometheus](https://promotheus.io) metrics, the fo
 * Google [cAdvisor](https://github.com/google/cadvisor) (Container Advisor) to provide insights about the resource usage and performance characteristics of the running containers.
 * Prometheus [node-exporter](https://github.com/prometheus/node_exporter) to monitor the host system
 
-The [Grafana](https://grafana.com) supports the corresponding dashboard templates, and the latter can further extended.
+The [Grafana](https://grafana.com) supports the corresponding dashboard templates, and the latter can be further customized.
 
 Also an Alert Manager, the Prometheus [Alertmanager](https://github.com/prometheus/alertmanager) is deployed, e.g. to send messages to a Slack channel.
 
@@ -345,23 +345,25 @@ The testing framework is made of the [Jest.js](https://jestjs.io) & [Chai](https
 
 ### Production Considerations
 
-The integrated Logging technique is based on the production-grade flexible [Winston Logger](https://www.npmjs.com/package/winston). In production mode (`NODE_ENV=production`) the console output is disabled and logs are aggregated in a JSON file, with the provided log level thresholds. The later enables a log watcher service such as Kibana or LogWatcher to integrate these logs and define filters and alerts for a continuous monitoring. 
-*Note*: A file rollout mechanism based on the file size or content length must be implemented on the network file system.
+The integrated Logging technique is based on the flexible [Winston Logger](https://www.npmjs.com/package/winston). 
 
-As long as there is no external data persistency, current implementation stored all data in memory. This is problematic for the current account update events' ingestion service since it keeps in memory an entry for every met account. This is not scalable on a real system. Other services have limited states storage in memory, those are temporary (callback handler service) and/or limited (tokens leaderboard).
+In production mode (`NODE_ENV=production`) the console output is disabled and logs are aggregated in a JSON file, with the provided log level thresholds. The later enables a log watcher service such as Kibana or CloudWatcher to integrate these logs and define filters and alerts for a continuous monitoring.
 
-Actual implementation automatically shuts down once all account update events are processed. On an actual system, a ping & status REST API should be used to check for the service availability. Else the Docker container's resources usage (CPU, memory, network usage) would have to be monitored and a scaling service such as K8s or Fargate being considered, as well as KV-based caching and/or event-based coordination systems among the app instances.
+A file rollout mechanism based on time (daily), the file size or content length is implemented. Refer to [`logger.ts`](./src/common/logger.ts).
+
+As long as there is no external data persistency, current implementation stores all data in memory. This is problematic for the current account update events' ingestion service since it keeps in memory an entry for every met account. This is not scalable on a real system. Other services have limited states storage in memory, those are temporary (callback handler service) and/or limited (tokens leaderboard).
+
+Actual implementation automatically shuts down once all account update events are processed. On an actual system, a ping & status REST API should be used to check for the service availability. Else the Docker container's resources usage (CPU, memory, network usage) would have to be monitored and a scaling service such as K8s or Fargate-like / Docker Swarm is to be considered, as well as KV-based caching and event-based coordination systems among the app instances.
 
 The interesting challenge for going to production is to replace actual mock implementation to cast events by an actual external data source integration: a continuous polling or event-driven (Websock, Event/Message Queuing), then the integration will be fun and performance considerations further challenged.
 
-Such external services would also have to be continuously monitored (external data source server, in memory caching & database): their access, availability, performance and operating costs.
+Such external services would also have to be continuously monitored (external data source server, in memory caching & database): their access, availability, performance and operating costs. Actual implementation has initiated such an advanced metrics support, based on Prometheus.
 
 ## Technical Challenge
 
 Below  are the provided inputs & expectations of the technical challenge this project has been originally developped for.
 
-### Tasks
-#### Features support
+### Features support
 
 - [x] Create classes having appropriate encapsulation, attributes, and well deﬁned interfaces.
 
@@ -451,7 +453,7 @@ Screenshots of the console output when running the app using `docker:run`
 
 Screenshot of the Grafana monitoring dashboard:
 
-![Grafana dasboard screenshot](./static/screenshot/grafana-firefox_1alert.png)
+![Grafana dasboard screenshot](./static/screenshot/grafana-firefox_0alert.png)
 
 ## License
 
