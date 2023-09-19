@@ -2,9 +2,9 @@
 
 ## Description
 
-Purpose: Simulation of the casting, ingestion & handling of accounts' update events issued by a blockchain.
+Purpose: Simulation of the casting, ingestion & handling of accounts' update events issued from a blockchain.
 
-Solana account updates are considered, being streamed continuously in a real time system. In the context of this project, the casting of logged account updates is emulated: a static JSON file is loaded (made of +100 entries) and their casting is made sequentially, based on a random time interval.
+Solana account updates are considered, being streamed continuously in a real time system. In the context of this project, the casting of logged account updates is emulated: a static JSON file is loaded (made of +100 entries) and their casting is made sequentially, based on random time intervals.
 
 This project demonstrates possible techniques for ingesting data & handling their further processing. Moreover it emphasizes on good software development practices, in terms of tooling, architecture and functionnal design to address a production-ready service.
 
@@ -25,6 +25,8 @@ This project has been developped using the [Node.js](https://nodejs.org) LTS ver
 
 Commit hooks are implemented using [husky](https://typicode.github.io/husky/). They lint, format & test the code automatically prior to actually committing.
 
+The [Docker](https://docker.io) platform can be optionally used to ease the local deployment of containers.
+
 ## Instructions
 
 ### Quick run
@@ -43,9 +45,16 @@ $ npm i && npm run start
 
 Even cleaner, if you have Docker locally installed and want the artifacts & dependencies to be in the Docker image only:
 ```bash
-# Install and run locally (prod mode)
+# Install and run locally
 $ npm run docker:build && npm run docker:run
+
+# Install and run locally (production mode)
+$ npm run docker:build:prod && npm run docker:run:prod
 ```
+
+In those modes, check out the console output and eventually have a look at [localhost:3000](http://localhost:3000).
+
+If you want a view on the monitoring system, refer to the Docker Swarm [section](#docker-swarm-deployment) for instructions.
 
 ### Installation
 
@@ -83,6 +92,16 @@ $ pnpm test:cov
 # End-to-end tests
 $ pnpm test:e2e
 ```
+
+### TS Code Documentation
+The application JS/TypeSript Code documentation can be generated on demand:
+```bash
+# Generate a Typedoc documentation
+$ pnpm doc
+```
+
+The generated Web doc is then available in the sub-directory `./docs`.
+
 
 ### Docker Integration
 
@@ -144,37 +163,93 @@ $ pnpm docker:cleanup
 
 ## Monitoring
 
-Default API URLs are 
+Default app server API URLs are 
 * `http://localhost:3000/api/v1/metrics` for metrics 
 
 * `http://localhost:3000/api/v1/health` for the healthcheck
 
 ### Monitoring Stack
 
-You can use Docker Compose to quickly launch the app server along with a Prometheus & a Grafana nodes.
+You can use Docker Compose to quickly launch the app server along with a [Prometheus](https://promotheus.io) & a [Grafana](https://grafana.com) nodes.
 
-Run the Prometheus and Grafana containers locally:
+Run the Node.js app, Prometheus (+ node-exporter) and Grafana containers locally:
 ```bash
-docker-compose up
+docker compose up
+```
+
+Alternatively, use the npm script that comes with default cleanup options:
+```bash
+npm run docker:compose:up
 ```
 
 ### Prometheus
 
-Prometheus configuration is available in [promotheus.yml](./monitoring/prometheus/prometheus.yml)
+An open-source monitoring system with a dimensional data model, flexible query language, efficient time series database and modern alerting approach.
 
-Promotheus Web UI: [localhost:9090](http://localhost:9090)
+Refer to the product Web site: [promotheus.io](https://promotheus.io)
+
+The Prometheus main configuration is available in [promotheus.yml](./monitoring/prometheus/prometheus.yml)
+
+The Promotheus Web UI is available at [localhost:9090](http://localhost:9090), using Docker Compose, or [promotheus.localhost](http://promotheus.localhost) using Docker Swarm.
 
 ### Grafana
 
+Grafana is the open source analytics & monitoring solution for every database.
+
+Refer to the product Web site: [grafana.com](https://grafana.com)
+
 Grafana main configurations:
 * General [monitoring config](./monitoring/grafana/config.monitoring)
-* Provisioning [datasource](./monitoring/grafana/provisioning/datasources/datasource.yml)
+* Provisioning [Data Sources](./monitoring/grafana/provisioning/datasources/datasource.yml)
+* Provisioning [Dashboards](./monitoring/grafana/provisioning/dashboards/)
 
-Grafana Web UI: [localhost:3000](http://localhost:3000) (default user is `admin`, see the enironment [config](./monitoring/grafana/config.monitoring) file)
+Grafana Web UI: [localhost:3000](http://localhost:3000) using Docker Compose, or [grafana.localhost](http://grafana.localhost) using Docker Swarm.
+  Default user is `admin`, see the enironment [config](./monitoring/grafana/config.monitoring) file.
 
+### Docker Swarm Deployment
 
+A more advanced stack supported by [Docker Swarm](https://docs.docker.com/engine/swarm/) is introduced.
 
-## Architecture
+Its purpose is to:
+* Proxyfy the http accesses to the Docker containers
+* Embed a complete monitoring stack
+* Emulate locally an actual deployment in production
+
+![Stack diagram overview](./static/diag/arch-overview_diag02w.png)
+
+The ingress proxy is implemented using [Traefik Proxy](https://traefik.io/traefik/): a modern reverse proxy and load balancer.
+
+In order to further feed our [Prometheus](https://promotheus.io) metrics, the following are integrated:
+* Google [cAdvisor](https://github.com/google/cadvisor) (Container Advisor) to provide insights about the resource usage and performance characteristics of the running containers.
+* Prometheus [node-exporter](https://github.com/prometheus/node_exporter) to monitor the host system
+
+The [Grafana](https://grafana.com) supports the corresponding dashboard templates, and the latter can further extended.
+
+Also an Alert Manager, the Prometheus [Alertmanager](https://github.com/prometheus/alertmanager) is deployed, e.g. to send messages to a Slack channel.
+
+Publicly exposed services:
+* Account Update Ingestor API: [ingestor.localhost/api/v1/*](http://ingestor.localhost/api/v1/health)
+* Grafana Web dashboard: [grafana.localhost](http://grafana.localhost)
+* Prometheus Web UI: [prometheus.localhost](http://prometheus.localhost)
+
+The Docker Swarm configuration is available in [docker-stack-traefik.yml](./docker-stack-traefik.yml).
+
+Docker Swarm stack instructions:
+```bash
+# Docker CLI for deploying the stack / services
+docker stack deploy -c docker-stack-traefik.yml <stack_name>
+
+# Deploy the services using the npm script
+pnpm docker:stack:deploy
+
+# Stopping & removing the services
+docker stack rm <stack_name>
+
+# Stopping & removing the services using the npm script
+pnpm docker:stack:rm
+```
+
+## Server App Architecture
 ### Key drivers
 
 While this is a demo application, the design of this app meets the following fundamentals:
@@ -306,20 +381,6 @@ Below  are the provided inputs & expectations of the technical challenge this pr
 
 - [x] Once all events and callbacks have completed, print the highest token-value accounts by AccountType (taking into account the right version), and gracefully shut-down the system.
 
-#### Project support
-
-1. A README ﬁle that contains:
-- [x] Instructions on how to run and test your code in a local environment through the command line.
-- [x] A description of how and why you chose the design patterns you did
-- [x] A description of what observability you would add if this was a production system.
-  What would you monitor for a production rollout?
-
-2. Production-ready code that:
-- [x] Follows community standard syntax and style
-- [x] Has no debug logging, TODOs, or FIXMEs
-- [x] Has test coverage to ensure quality and safety *(Actual is minimal)*
-
-
 ### Info
 
 #### Data model
@@ -387,6 +448,10 @@ Screenshots of the console output when running the app using `docker:run`
 
 ![Console screenshot docker:run](./static/screenshot/console_docker-run.png)
 ![Console screenshot: processing done](./static/screenshot/console_process-done.png)
+
+Screenshot of the Grafana monitoring dashboard:
+
+![Grafana dasboard screenshot](./static/screenshot/grafana-firefox_1alert.png)
 
 ## License
 
