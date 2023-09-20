@@ -226,7 +226,7 @@ In order to further feed our [Prometheus](https://promotheus.io) metrics, the fo
 
 The [Grafana](https://grafana.com) supports the corresponding dashboard templates, and the latter can be further customized.
 
-Also an Alert Manager, the Prometheus [Alertmanager](https://github.com/prometheus/alertmanager) is deployed, e.g. to send messages to a Slack channel.
+Also the Prometheus [Alertmanager](https://github.com/prometheus/alertmanager) is deployed, e.g. it enables sending messages to a Slack channel.
 
 Publicly exposed services:
 * Account Update Ingestor API: [ingestor.localhost/api/v1/*](http://ingestor.localhost/api/v1/health)
@@ -238,7 +238,7 @@ The Docker Swarm configuration is available in [docker-stack-traefik.yml](./dock
 Docker Swarm stack instructions:
 ```bash
 # Docker CLI for deploying the stack / services
-docker stack deploy -c docker-stack-traefik.yml <stack_name>
+docker stack deploy -c docker-stack-monitoring.yml <stack_name>
 
 # Deploy the services using the npm script
 pnpm docker:stack:deploy
@@ -354,9 +354,9 @@ A file rollout mechanism based on time (daily), the file size or content length 
 
 As long as there is no external data persistency, current implementation stores all data in memory. This is problematic for the current account update events' ingestion service since it keeps in memory an entry for every met account. This is not scalable on a real system. Other services have limited states storage in memory, those are temporary (callback handler service) and/or limited (tokens leaderboard).
 
-Actual implementation automatically shuts down once all account update events are processed. On an actual system, a ping & status REST API should be used to check for the service availability. Else the Docker container's resources usage (CPU, memory, network usage) would have to be monitored and a scaling service such as K8s or Fargate-like / Docker Swarm is to be considered, as well as KV-based caching and event-based coordination systems among the app instances.
+Actual implementation can automatically shut down once all account update events are processed. On an actual system, a ping & status REST API should be used to check for the service availability. Else the Docker container's resources usage (CPU, memory, network usage) would have to be monitored and a scaling service such as K8s or Fargate-like, Docker Swarm is to be considered, as well as KV-based caching and event-based coordination systems among the app instances.
 
-The interesting challenge for going to production is to replace actual mock implementation to cast events by an actual external data source integration: a continuous polling or event-driven (Websock, Event/Message Queuing), then the integration will be fun and performance considerations further challenged.
+The interesting challenge for going to production is to replace actual mock implementation to cast events by an actual external data source integration: a continuous polling or event-driven (Websocket, Event/Message Queuing), then the integration will be fun and performance considerations further challenged.
 
 Such external services would also have to be continuously monitored (external data source server, in memory caching & database): their access, availability, performance and operating costs. Actual implementation has initiated such an advanced metrics support, based on Prometheus.
 
@@ -445,7 +445,7 @@ These scenarios only cover a single accountID, but demonstrate the expected inge
 
 1050ms - ID1 v3 callback ﬁres
 
-### Screenshots
+## Screenshots
 
 Screenshots of the console output when running the app using `docker:run`
 
