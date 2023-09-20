@@ -1,23 +1,23 @@
 # http://localhost:9090/
 global:
-  scrape_interval: 5s # By default, scrape targets every 5 seconds.
-  evaluation_interval: 5s
-  body_size_limit: 5MB
-  sample_limit: 1500
-  target_limit: 30
-  label_limit: 30
-  label_name_length_limit: 200
-  label_value_length_limit: 200
+  scrape_interval: 15s # By default, scrape targets every 5 seconds.
+  evaluation_interval: 15s
+  # body_size_limit: 5MB
+  # sample_limit: 1500
+  # target_limit: 30
+  # label_limit: 30
+  # label_name_length_limit: 200
+  # label_value_length_limit: 200
   # scrape_timeout is set to the global default (10s).
 
   # Attach these labels to any time series or alerts when communicating with
   # external systems (federation, remote storage, Alertmanager).
   external_labels:
     monitor: 'account-ingestor'
-    environment: Production
-    service: Prometheus
-    region: EU
-    dc: eu-west-1
+    # environment: Production
+    # service: Prometheus
+    # region: EU
+    # dc: eu-west-1
 
 alerting:
   alertmanagers:

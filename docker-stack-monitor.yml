@@ -19,7 +19,7 @@ services:
   traefik:
     image: traefik:v1.7.34-alpine
     command:
-      - '--logLevel=DEBUG'
+      - '--logLevel=INFO'
       - '--api'
       - '--metrics'
       - '--metrics.prometheus.buckets=0.1,0.3,1.2,5.0'
@@ -131,17 +131,17 @@ services:
       - /var/lib/docker/:/var/lib/docker:ro
       - /dev/kmsg:/dev/kmsg
       - /etc/machine-id:/etc/machine-id:ro
-    # ports:
-    #   - 8020:8080
+    ports:
+      - 8020:8080
     networks:
       - monitor-net
     deploy:
       mode: global
-      labels:
-        - 'traefik.frontend.rule=Host:cadvisor.localhost'
-        - 'traefik.backend=cadvisor'
-        - 'traefik.port=8080'
-        - 'traefik.docker.network=traefik'
+      # labels:
+      #   - 'traefik.frontend.rule=Host:cadvisor.localhost'
+      #   - 'traefik.backend=cadvisor'
+      #   - 'traefik.port=8080'
+      #   - 'traefik.docker.network=traefik'
       restart_policy:
         condition: on-failure
 

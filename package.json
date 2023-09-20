@@ -19,7 +19,7 @@
     "docker:run:prod": "docker run -p8080:3000 --name json-stream-proc-prod json-stream-proc-prod -l json-stream-proc-prod",
     "docker:sh:run": "docker run -it --name json-stream-proc-sh --entrypoint sh json-stream-proc",
     "docker:sh": "docker exec -it json-stream-proc sh",
-    "docker:stack:deploy": "docker stack deploy -c docker-stack-monitoring.yml mon --prune",
+    "docker:stack:deploy": "docker stack deploy -c docker-stack-monitor.yml mon --prune",
     "docker:stack:rm": "docker stack rm mon",
     "docker:start": "docker start json-stream-proc",
     "docker:vol:rm": "docker volume rm -f grafana_data prometheus_data mon_grafana_data mon_prometheus_data",
