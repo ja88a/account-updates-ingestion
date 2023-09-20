@@ -11,7 +11,10 @@ import Logger from '../../common/logger';
 const TAG = 'HealthCheck';
 
 /**
- * Abstract base implementation of the Health Indicator
+ * Abstract base implementation of the Health Indicator, based on the
+ * Terminus health indicator
+ *
+ * @see {@link HealthIndicator}
  */
 export abstract class BaseHealthIndicator extends HealthIndicator {
   public abstract name: string;
@@ -32,6 +35,9 @@ export abstract class BaseHealthIndicator extends HealthIndicator {
     label: this.constructor.name,
   });
 
+  /**
+   * Registration of a metrics, that is of type Histogram by default
+   */
   protected registerMetrics(): void {
     if (this.promClientService) {
       this.logger.info(
@@ -51,6 +57,9 @@ export abstract class BaseHealthIndicator extends HealthIndicator {
     }
   }
 
+  /**
+   * Registration of a metrics, that is of type Gauges
+   */
   protected registerGauges(): void {
     if (this.promClientService) {
       this.logger.info('Register metrics gauge for: ' + this.name, TAG, true);
@@ -59,6 +68,11 @@ export abstract class BaseHealthIndicator extends HealthIndicator {
     }
   }
 
+  /**
+   *
+   * @param value any string value to be tested
+   * @returns `true` if the value is defined, `false` otherwise
+   */
   protected isDefined(value: string | undefined): boolean {
     return !!value;
   }

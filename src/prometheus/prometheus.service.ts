@@ -11,6 +11,11 @@ interface IMapGauge {
   [key: string]: Gauge<string>;
 }
 
+/**
+ * Adaptor to provide Prometheus compliant metrics.
+ *
+ * It consists in a registry of metrics
+ */
 @Injectable()
 export class PrometheusService {
   private readonly serviceTitle = 'AccountUpdateIngestionServer';
@@ -18,10 +23,6 @@ export class PrometheusService {
   private registeredMetrics: IMapHistogram = {};
   private registeredGauges: IMapGauge = {};
   private readonly registry: Registry;
-
-  public metrics(): Promise<string> {
-    return this.registry.metrics();
-  }
 
   constructor() {
     this.registry = new Registry();
@@ -34,6 +35,18 @@ export class PrometheusService {
     });
   }
 
+  public metrics(): Promise<string> {
+    return this.registry.metrics();
+  }
+
+  /**
+   *
+   * @param name Metrics name
+   * @param help Info about the metrics
+   * @param labelNames Labels associated to the metrics
+   * @param buckets List of buckets for the metrics
+   * @returns the [newly] registered histogram metrics
+   */
   public registerMetrics(
     name: string,
     help: string,
