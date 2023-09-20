@@ -218,27 +218,27 @@ Its purpose is to:
 
 ![Stack diagram overview](./static/diag/arch-overview_diag02w.png)
 
-The ingress proxy is implemented using [Traefik Proxy](https://traefik.io/traefik/): a modern reverse proxy and load balancer.
+The ingress proxy is implemented using [Traefik Proxy](https://traefik.io/traefik/): a reverse proxy and load balancer.
 
 In order to further feed our [Prometheus](https://promotheus.io) metrics, the following are integrated:
 * Google [cAdvisor](https://github.com/google/cadvisor) (Container Advisor) to provide insights about the resource usage and performance characteristics of the running containers.
 * Prometheus [node-exporter](https://github.com/prometheus/node_exporter) to monitor the host system
 
-The [Grafana](https://grafana.com) supports the corresponding dashboard templates, and the latter can be further customized.
+The [Grafana](https://grafana.com) supports the provided dashboard templates, and the latters can be further customized.
 
-Also the Prometheus [Alertmanager](https://github.com/prometheus/alertmanager) is deployed, e.g. it enables sending messages to a Slack channel.
+Also the Prometheus [Alertmanager](https://github.com/prometheus/alertmanager) is deployed. This enables sending alert messages, e.g. to a Slack channel.
 
 Publicly exposed services:
 * Account Update Ingestor API: [ingestor.localhost/api/v1/*](http://ingestor.localhost/api/v1/health)
 * Grafana Web dashboard: [grafana.localhost](http://grafana.localhost)
 * Prometheus Web UI: [prometheus.localhost](http://prometheus.localhost)
 
-The Docker Swarm configuration is available in [docker-stack-traefik.yml](./docker-stack-traefik.yml).
+The Docker Swarm configuration is available in [docker-stack-monitor.yml](./docker-stack-monitor.yml).
 
 Docker Swarm stack instructions:
 ```bash
 # Docker CLI for deploying the stack / services
-docker stack deploy -c docker-stack-monitoring.yml <stack_name>
+docker stack deploy -c docker-stack-monitor.yml <stack_name>
 
 # Deploy the services using the npm script
 pnpm docker:stack:deploy
@@ -455,6 +455,7 @@ Screenshots of the console output when running the app using `docker:run`
 Screenshot of the Grafana monitoring dashboard:
 
 ![Grafana dasboard screenshot](./static/screenshot/grafana-firefox_0alert.png)
+
 
 ## License
 
