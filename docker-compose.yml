@@ -10,7 +10,7 @@ networks:
 
 services:
   prometheus:
-    image: prom/prometheus:latest
+    image: prom/prometheus:v2.47.0
     volumes:
       - ./monitoring/prometheus/:/etc/prometheus/:ro
       - prometheus_data:/prometheus:rw
@@ -28,7 +28,7 @@ services:
     restart: always
 
   node-exporter:
-    image: prom/node-exporter:latest
+    image: prom/node-exporter:v1.6.1
     volumes:
       - /proc:/host/proc:ro
       - /sys:/host/sys:ro
@@ -52,8 +52,26 @@ services:
     # pid: host
     restart: unless-stopped
 
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.47.2
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:rw
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk:/dev/disk:ro
+      - /dev/kmsg:/dev/kmsg
+      - /etc/machine-id:/etc/machine-id:ro
+    depends_on:
+      - prometheus
+    ports:
+      - 8088:8080
+    networks:
+      - back-tier
+    restart: on-failure
+  
   grafana:
-    image: grafana/grafana:9.4.14
+    image: grafana/grafana:10.1.2
     container_name: monitoring_grafana
     user: "472"
     depends_on:
@@ -75,7 +93,7 @@ services:
   ingestor:
     build:
       context: .
-    container_name: ingestor
+    container_name: account-ingestor
     image: account-ingestor
     ports:
       - '8090:3000'

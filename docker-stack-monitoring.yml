@@ -7,10 +7,10 @@ volumes:
 networks:
   back-net:
     driver: overlay
-    name: monitoring
+    name: backend
   monitor-net:
     driver: overlay
-    name: inbound
+    name: monitoring
   traefik:
     driver: overlay
     name: traefik
@@ -29,7 +29,7 @@ services:
       - '--docker.watch'
     networks:
       - traefik
-      - back-net
+      # - back-net
       - monitor-net
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
@@ -56,7 +56,7 @@ services:
         condition: on-failure
 
   prometheus:
-    image: prom/prometheus:latest
+    image: prom/prometheus:v2.47.0
     volumes:
       - ./monitoring/prometheus/:/etc/prometheus/:ro
       - prometheus_data:/prometheus:rw
@@ -80,7 +80,7 @@ services:
         condition: on-failure
 
   node-exporter:
-    image: prom/node-exporter
+    image: prom/node-exporter:v1.6.1
     volumes:
       - /proc:/host/proc:ro
       - /sys:/host/sys:ro
@@ -100,9 +100,9 @@ services:
         condition: on-failure
 
   alertmanager:
-    image: prom/alertmanager
-    # ports:
-    #   - 9093:9093
+    image: prom/alertmanager:v0.25.1
+    ports:
+      - 9093:9093
     volumes:
       - './monitoring/alertmanager/:/etc/alertmanager/'
     networks:
@@ -114,42 +114,44 @@ services:
       placement:
         constraints:
           - node.role==manager
-      labels:
-        - 'traefik.frontend.rule=Host:alertmanager.localhost'
-        - 'traefik.backend=alertmanager'
-        - 'traefik.port=9093'
-        - 'traefik.docker.network=traefik'
+      # labels:
+      #   - 'traefik.frontend.rule=Host:alertmanager.localhost'
+      #   - 'traefik.backend=alertmanager'
+      #   - 'traefik.port=9093'
+      #   - 'traefik.docker.network=traefik'
       restart_policy:
         condition: on-failure
 
   cadvisor:
-    image: gcr.io/cadvisor/cadvisor
-    ports:
-      - 8088:8080
+    image: gcr.io/cadvisor/cadvisor:v0.47.2
     volumes:
       - /:/rootfs:ro
       - /var/run:/var/run:rw
       - /sys:/sys:ro
       - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/kmsg:/dev/kmsg
+      - /etc/machine-id:/etc/machine-id:ro
+    # ports:
+    #   - 8020:8080
     networks:
       - monitor-net
     deploy:
       mode: global
-      # labels:
-      #   - 'traefik.frontend.rule=Host:cadvisor.localhost'
-      #   - 'traefik.backend=cadvisor'
-      #   - 'traefik.port=8080'
-      #   - 'traefik.docker.network=traefik'
+      labels:
+        - 'traefik.frontend.rule=Host:cadvisor.localhost'
+        - 'traefik.backend=cadvisor'
+        - 'traefik.port=8080'
+        - 'traefik.docker.network=traefik'
       restart_policy:
         condition: on-failure
 
   grafana:
-    image: grafana/grafana
+    image: grafana/grafana:10.1.2
     depends_on:
       - prometheus
     volumes:
-      - ./monitoring/grafana/provisioning/:/etc/grafana/provisioning/:ro
       - grafana_data:/var/lib/grafana:rw
+      - ./monitoring/grafana/provisioning/:/etc/grafana/provisioning/:ro
     env_file:
       - ./monitoring/grafana/config.monitoring
     networks:
