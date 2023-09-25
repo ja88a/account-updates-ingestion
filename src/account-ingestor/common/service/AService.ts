@@ -51,7 +51,7 @@ abstract class AService implements IService {
   }
 
   /**
-   * @see {@link IService.shutdown}
+   * @see {@link IService}
    */
   shutdown(signal: string): void {
     this.logger.debug('Shutting down the service on Signal: ' + signal);

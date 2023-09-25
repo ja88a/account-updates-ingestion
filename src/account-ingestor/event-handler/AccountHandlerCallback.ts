@@ -63,7 +63,7 @@ export class AccountHandlerCallback
    *
    * @see {@link IService.reportStatus}
    * @override {@link AService.reportStatus}
-   * @returns the number of active `callbacks` and the ID of AccountUpdate in `accounts`
+   * @returns The number of active/pending `callbacks` and the ID of their associated source Account in `accounts`
    */
   reportStatus(): { callbacks: number; accounts: string[] } {
     const report = {
@@ -74,7 +74,7 @@ export class AccountHandlerCallback
   }
 
   /**
-   * @override {@link AService.shutdown}
+   * @override {@link AService}
    */
   shutdown(signal: string): void {
     this.callbackTimeout.forEach((entry) => {
