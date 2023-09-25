@@ -42,6 +42,9 @@ export class EventSourceServiceMock
   /** URL of the JSON file to be fetched for populating a sample data set (mock) */
   private jsonMockFileUrl: string = MOCK_DATA_URL;
 
+  /** State of the casting mode, specify if it is enabled (`true`) or not */
+  private castingEnabled: boolean = true;
+
   /**
    * Set a new file URL as source of mock data
    * @param newStaticJsonFileUrl URL to the JSON file, e.g. `https://whatever.com/account-update-logs.json`
@@ -106,9 +109,11 @@ export class EventSourceServiceMock
    * instead we load a static JSON data set of Account Updates and cast them
    * individually & sequentially for emulating an event casting system.
    *
-   * @see {@link IEventSourceService.startMonitoringEvents}
+   * @see {@link IEventSourceService}
    */
-  async startMonitoringEvents(): Promise<void> {
+  async startImportingUpdates(): Promise<void> {
+    this.castingEnabled = true;
+
     // Load the data sets of Account Events
     await this.loadAccountEventsFromUrl(this.jsonMockFileUrl)
       .then((results) => {
@@ -126,6 +131,13 @@ export class EventSourceServiceMock
   }
 
   /**
+   * @see {@link IEventSourceService}
+   */
+  async stopImportingUpdates(): Promise<void> {
+    this.castingEnabled = false;
+  }
+
+  /**
    * Cast sequentially the account update events.
    *
    * Real-time casting is simulated using a random duration between 2 events casting.
@@ -134,18 +146,24 @@ export class EventSourceServiceMock
    */
   private castAccountEvents(accountEvents: AccountUpdate[]) {
     if (!accountEvents)
-      throw new Error(`No Account Events provided for casting `);
+      throw new Error(`No Account Events provided for casting`);
 
     // Detect when there are no more account events to be cast
-    if (accountEvents.length == 0) {
+    if (!this.castingEnabled || accountEvents.length == 0) {
+      if (!this.castingEnabled && this.eventCastingTimeout !== undefined) {
+        // Cancel the last planned event casting
+        clearTimeout(this.eventCastingTimeout);
+      }
       this.eventCastingTimeout = undefined;
       this.logger.warn(
-        `Casting of Account Update Events is OVER - no more left`,
+        `Casting of AccountUpdate events is OVER ${
+          this.castingEnabled ? '- no more left' : ''
+        }`,
       );
       const statusEvt: ServiceStatusEvent = {
         source: this.constructor.name,
-        active: false,
-        leftover: 0,
+        active: this.castingEnabled && accountEvents.length > 0,
+        leftover: accountEvents.length,
       };
       this.eventEmitter.emit(EEventName.SERVICE_UPDATE, statusEvt);
       return;
@@ -158,6 +176,7 @@ export class EventSourceServiceMock
 
     // Emit an event, remove the cast one from the FIFO & loop back to send next event sequentially
     this.eventCastingTimeout = setTimeout(() => {
+      // Remove last element from the FIFO queue of events left for casting
       const accountEvt = accountEvents.pop();
       if (accountEvt) {
         // Cast the account update event
@@ -184,21 +203,13 @@ export class EventSourceServiceMock
   }
 
   /**
-   * Remove all listeners of the events emitter and stop casting new events
-   */
-  private stopEmittingEvents() {
-    if (this.eventEmitter) this.eventEmitter.removeAllListeners();
-    if (this.eventCastingTimeout) {
-      clearTimeout(this.eventCastingTimeout);
-      this.eventCastingTimeout = undefined;
-    }
-  }
-
-  /**
    * @override {@link AService.shutdown}
    */
   shutdown(signal: string): void {
-    this.stopEmittingEvents();
+    this.stopImportingUpdates();
+
+    if (this.eventEmitter) this.eventEmitter.removeAllListeners();
+
     super.shutdown(signal);
   }
 }

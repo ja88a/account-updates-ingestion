@@ -21,10 +21,16 @@ export interface IEventSourceService extends IService {
   /**
    * Start the monitoring process of externally emitted events.
    *
-   * Note: For the reported events to be handled/caught, corresponding listeners must have
+   * Note: For the imported then reported events to be handled, corresponding listeners must have
    * registered their callback method. Refer to {@link IEventSourceService.registerListener}
    *
    * @returns Nothing is returned but a Promise for possible chaining
    */
-  startMonitoringEvents(): Promise<void>;
+  startImportingUpdates(): Promise<void>;
+
+  /**
+   * Stop the monitoring process of externally emitted events.
+   * @returns Nothing is returned but a Promise for possible chaining
+   */
+  stopImportingUpdates(): Promise<void>;
 }
