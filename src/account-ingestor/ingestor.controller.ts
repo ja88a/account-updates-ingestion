@@ -3,7 +3,11 @@ import { AccountIngestorService } from './ingestor.service';
 import Logger from '../common/logger';
 
 import { exit } from 'process';
-import { MS_CONFIG } from '../common/config';
+import {
+  EProcessExitSignal,
+  EXIT_MAX_WAIT_MS,
+  MS_CONFIG,
+} from '../common/config';
 import {
   AccountTimeRange,
   AccountTypeTokenOwners,
@@ -119,8 +123,8 @@ export class AccountIngestorController {
    * @returns none
    */
   @Put('/shutdown')
-  shutdown(): void {
-    this.stop(true);
+  async shutdown(): Promise<void> {
+    await this.onApplicationShutdown(EProcessExitSignal.SIGRPC);
   }
 
   /// =================================================================
@@ -133,7 +137,7 @@ export class AccountIngestorController {
       this.logger.error(
         `Application main service failed to init. Stopping it \n${error}`,
       );
-      await this.onApplicationShutdown('INIT_FAIL');
+      await this.onApplicationShutdown(EProcessExitSignal.INIT_FAIL);
     });
 
     try {
@@ -143,7 +147,7 @@ export class AccountIngestorController {
       this.eventSource.init();
     } catch (error) {
       this.logger.error(`Failed to init services. Stopping the app \n${error}`);
-      await this.onApplicationShutdown('INIT_FAIL');
+      await this.onApplicationShutdown(EProcessExitSignal.INIT_FAIL);
       return;
     }
 
@@ -187,11 +191,11 @@ export class AccountIngestorController {
     );
 
     // Launch the casting of Account Update events
-    this.eventSource.startMonitoringEvents().catch(async (error: Error) => {
+    this.eventSource.startImportingUpdates().catch(async (error: Error) => {
       this.logger.error(
         `Events Sourcing service failed to start monitoring for events. Stopping the app\n${error}`,
       );
-      await this.onApplicationShutdown('INIT_FAIL');
+      await this.onApplicationShutdown(EProcessExitSignal.INIT_FAIL);
     });
   }
 
@@ -207,30 +211,78 @@ export class AccountIngestorController {
       statusEvent.source == EventSourceServiceMock.name &&
       statusEvent.active == false
     ) {
-      // The casting of mock event is over: report info & shutdown the app once all callbacks have triggered
-      this.stopOnceAllCallbackAreTiggered();
+      // The casting of mock updates is over: report info
+      if (MS_CONFIG.EXIT_ON_STOP) {
+        // shutdown the app
+        this.onApplicationShutdown(
+          statusEvent.leftover == 0
+            ? EProcessExitSignal.DONE
+            : EProcessExitSignal.LEFTOVER,
+        );
+      }
     }
   }
 
   /**
-   * Check if there are AccountUpdate callbacks still pending
-   * If not, stop the app
+   * Check if there are AccountUpdate callbacks still pending.
+   * If not, stop the app.
+   *
+   * A maximum wait time is set by default: {@link EXIT_MAX_WAIT_MS}
+   *
+   * @param signal Specification of the process exit signal, required only if app is expected to shutdown
+   * @param startTime Optional specification of the waiting process start time
    */
-  private stopOnceAllCallbackAreTiggered() {
+  private async waitUntilAllCallbacksLeftTigger(
+    signal: string,
+    startTime: number | undefined = Date.now(),
+  ): Promise<void> {
+    // Make sure the waiting period is not too long
+    const actualTime = Date.now();
+    const keepWaiting = startTime + EXIT_MAX_WAIT_MS > actualTime;
+
+    // Get the info about pending callbacks
     const callbacksStatus = this.eventHandlerCallback.reportStatus();
-    if (callbacksStatus.callbacks > 0) {
-      setTimeout(() => {
-        this.stopOnceAllCallbackAreTiggered();
-      }, 500);
-    } else {
-      this.stop(MS_CONFIG.EXIT_ON_STOP);
+
+    this.logger.debug(
+      `Shall we wait? ${keepWaiting} leftOver: ${
+        callbacksStatus.callbacks
+      } timeLeft: ${(startTime + EXIT_MAX_WAIT_MS - actualTime) / 1000}s`,
+    );
+
+    if (keepWaiting && callbacksStatus.callbacks > 0) {
+      // Delay the call for checking again if there are still pending callback triggers
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      await this.waitUntilAllCallbacksLeftTigger(signal, startTime);
     }
   }
 
   /**
-   * Stop the app: log the max tokens' accounts and exit if configured so
+   * Stop the app: stop the app services
    */
-  private stop(shutdown: boolean | undefined = false): void {
+  private async stop(): Promise<void> {
+    // Stop feeding the ingestor with external inputs
+    this.eventSource.stopImportingUpdates();
+  }
+
+  /**
+   * Default graceful App shutdown method
+   *
+   * It is bound to the Nodejs shutdown hooks and gets triggered on any interruptions.
+   *
+   * @param signal Signal at the origin of this shutdown call, e.g. `SIGINT`
+   * @see {@link EProcessExitSignal} for the app specific signals
+   */
+  async onApplicationShutdown(signal: string): Promise<void> {
+    if (signal == EProcessExitSignal.DONE) {
+      this.logger.warn(`Shutting down the app - Job ${signal}`);
+    } else {
+      this.logger.warn(`Graceful App Shutdown required on signal ${signal}`);
+      await this.stop();
+    }
+
+    // Wait for all callbacks to be triggered
+    await this.waitUntilAllCallbacksLeftTigger(signal);
+
     // Report the biggest tokens' owner per account type
     const tokenLeaderSatus = this.eventHandlerLeader.reportStatus().leaderboard;
     let textReport = '';
@@ -239,20 +291,7 @@ export class AccountIngestorController {
         entry.accounts[0].id
       }\t${entry.accounts[0].tokens} tokens\n`;
     });
-    this.logger.info(`Max tokens owner, per account type:\n${textReport}`);
-
-    if (shutdown) this.onApplicationShutdown('DONE');
-  }
-
-  /**
-   * Default App shutdown method
-   *
-   * It is bound to the app/shutdown shutdown hooks and gets triggered on any interruptions.
-   *
-   * @param signal Signal at the origin of this shutdown call
-   */
-  async onApplicationShutdown(signal: string): Promise<void> {
-    this.logger.warn('Shutting down Main App on signal ' + signal); // e.g. "SIGINT"
+    this.logger.info(`Max tokens holder, per account type:\n${textReport}`);
 
     try {
       if (this.eventSource) this.eventSource.shutdown(signal);
