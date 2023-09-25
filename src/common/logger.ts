@@ -21,7 +21,7 @@ const logger = createLogger({
     }),
     format.json(),
   ),
-  defaultMeta: { service: 'onchain-events-ingestor' },
+  defaultMeta: { service: 'account-updates-ingestor' },
   transports: [
     // - Write all logs with importance level of `error` or less to `error.log`
     new DailyRotateFile({
@@ -69,7 +69,7 @@ const logger = createLogger({
 if (process.env.NODE_ENV !== EConfigRunMode.PROD) {
   const consoleFormat = format.printf(
     ({ timestamp, label, level, message }) => {
-      return `${timestamp} [${label}] ${level}: ${message}`;
+      return `${timestamp} ${level} [${label}] ${message}`;
     },
   );
 
