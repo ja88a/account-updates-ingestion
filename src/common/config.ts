@@ -24,7 +24,7 @@ export const MS_CONFIG = {
   /**
    * Specify if the server app should automatically shutdown by default, when the service gets inactive
    */
-  EXIT_ON_STOP: false,
+  EXIT_ON_STOP: true,
 };
 
 /**
@@ -72,3 +72,19 @@ export enum EConfigRunMode {
   DEV = 'dev',
   default = PROD,
 }
+
+/**
+ * The list of app specific process exit signals, used when shutting down the app
+ */
+
+export enum EProcessExitSignal {
+  DONE = 'DONE',
+  INIT_FAIL = 'INIT_FAIL',
+  LEFTOVER = 'LEFTOVER',
+  SIGRPC = 'SIGRPC',
+}
+
+/**
+ * Max duration expressed in milliseconds to wait for shutting down the app
+ */
+export const EXIT_MAX_WAIT_MS: number = 10000;
