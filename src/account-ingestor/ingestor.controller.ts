@@ -47,10 +47,10 @@ export class AccountIngestorController {
    */
   constructor(
     private readonly appService: AccountIngestorService,
-    private readonly eventSource: EventSourceService,
-    private readonly eventIngestor: AccountUpdateIngestor,
-    private readonly eventHandlerCallback: AccountHandlerCallback,
-    private readonly eventHandlerLeader: AccountHandlerTokenLeaders,
+    private readonly updSource: EventSourceService,
+    private readonly updIngestor: AccountUpdateIngestor,
+    private readonly updHandlerCallback: AccountHandlerCallback,
+    private readonly updHandlerLeader: AccountHandlerTokenLeaders,
   ) {}
 
   /**
@@ -77,9 +77,9 @@ export class AccountIngestorController {
     pending: any;
   } {
     return {
-      accounts: this.eventIngestor.reportStatus(),
-      maxtokens: this.eventHandlerLeader.reportStatus(),
-      pending: this.eventHandlerCallback.reportStatus(),
+      accounts: this.updIngestor.reportStatus(),
+      maxtokens: this.updHandlerLeader.reportStatus(),
+      pending: this.updHandlerCallback.reportStatus(),
     };
   }
 
@@ -92,7 +92,7 @@ export class AccountIngestorController {
    */
   @Get('/leaderboard')
   getLeaderboard(): any {
-    return this.eventHandlerLeader.reportLeaderboard();
+    return this.updHandlerLeader.reportLeaderboard();
   }
 
   /**
@@ -106,7 +106,7 @@ export class AccountIngestorController {
     @Param('accountType') accountType: string,
     @Param('time') timems: number,
   ): AccountTimeRange {
-    return this.eventHandlerLeader.retrieveTopOwnerAtTime(accountType, timems);
+    return this.updHandlerLeader.retrieveTopOwnerAtTime(accountType, timems);
   }
 
   /**
@@ -141,12 +141,12 @@ export class AccountIngestorController {
     });
 
     try {
-      this.eventHandlerLeader.init();
-      this.eventHandlerCallback.init();
-      this.eventIngestor.init();
-      this.eventSource.init();
+      this.updHandlerLeader.init();
+      this.updHandlerCallback.init();
+      this.updIngestor.init();
+      this.updSource.init();
     } catch (error) {
-      this.logger.error(`Failed to init services. Stopping the app \n${error}`);
+      this.logger.error(`Failed to init services. Stopping the app \n${error}`, error);
       await this.onApplicationShutdown(EProcessExitSignal.INIT_FAIL);
       return;
     }
@@ -163,22 +163,22 @@ export class AccountIngestorController {
    */
   private bindServices() {
     // Register the app controller to get updates on the source service, service related
-    this.eventSource.registerListener(
+    this.updSource.registerListener(
       EEventName.SERVICE_UPDATE,
       this.handleServiceEvent,
       this,
     );
 
     // Register the Account Update Ingesting service to handle corresponding events
-    this.eventSource.registerListener(
+    this.updSource.registerListener(
       EEventName.ACCOUNT_UPDATE,
-      this.eventIngestor.ingestAccountUpdate,
-      this.eventIngestor,
+      this.updIngestor.ingestAccountUpdate,
+      this.updIngestor,
     );
 
     // Register the  Account Update Handlers to the Ingesting service to be notified on newly indexed update
-    this.eventIngestor.registerAccountUpdateHandler(this.eventHandlerCallback);
-    this.eventIngestor.registerAccountUpdateHandler(this.eventHandlerLeader);
+    this.updIngestor.registerAccountUpdateHandler(this.updHandlerCallback);
+    this.updIngestor.registerAccountUpdateHandler(this.updHandlerLeader);
   }
 
   /**
@@ -187,13 +187,13 @@ export class AccountIngestorController {
    */
   private start(): void {
     this.logger.info(
-      'Start the Account Update events casting & ingestion session',
+      'Start the casting & ingestion of Account Update events',
     );
 
     // Launch the casting of Account Update events
-    this.eventSource.startImportingUpdates().catch(async (error: Error) => {
+    this.updSource.startImportingUpdates().catch(async (error: Error) => {
       this.logger.error(
-        `Events Sourcing service failed to start monitoring for events. Stopping the app\n${error}`,
+        `Events Sourcing service failed to start monitoring for events. Stopping the app\n${error}`, error
       );
       await this.onApplicationShutdown(EProcessExitSignal.INIT_FAIL);
     });
@@ -225,7 +225,6 @@ export class AccountIngestorController {
 
   /**
    * Check if there are AccountUpdate callbacks still pending.
-   * If not, stop the app.
    *
    * A maximum wait time is set by default: {@link EXIT_MAX_WAIT_MS}
    *
@@ -241,7 +240,7 @@ export class AccountIngestorController {
     const keepWaiting = startTime + EXIT_MAX_WAIT_MS > actualTime;
 
     // Get the info about pending callbacks
-    const callbacksStatus = this.eventHandlerCallback.reportStatus();
+    const callbacksStatus = this.updHandlerCallback.reportStatus();
 
     this.logger.debug(
       `Shall we wait? ${keepWaiting} leftOver: ${
@@ -261,7 +260,7 @@ export class AccountIngestorController {
    */
   private async stop(): Promise<void> {
     // Stop feeding the ingestor with external inputs
-    this.eventSource.stopImportingUpdates();
+    this.updSource.stopImportingUpdates();
   }
 
   /**
@@ -280,24 +279,26 @@ export class AccountIngestorController {
       await this.stop();
     }
 
-    // Wait for all callbacks to be triggered
+    // Wait for all pending callbacks to be triggered before leaving
     await this.waitUntilAllCallbacksLeftTigger(signal);
 
     // Report the biggest tokens' owner per account type
-    const tokenLeaderSatus = this.eventHandlerLeader.reportStatus().leaderboard;
+    const tokenLeaderSatus = this.updHandlerLeader.reportStatus().leaderboard;
     let textReport = '';
     tokenLeaderSatus.forEach((entry) => {
       textReport += `\t${entry.type}\t${entry.type.length < 8 ? '\t' : ''}${
         entry.accounts[0].id
       }\t${entry.accounts[0].tokens} tokens\n`;
     });
-    this.logger.info(`Max tokens holder, per account type:\n${textReport}`);
+    if (tokenLeaderSatus.length > 0)
+      this.logger.info(`Max tokens holder, per account type:\n${textReport}`);
 
+    // Shutdown them all
     try {
-      if (this.eventSource) this.eventSource.shutdown(signal);
-      if (this.eventIngestor) this.eventIngestor.shutdown(signal);
-      if (this.eventHandlerCallback) this.eventHandlerCallback.shutdown(signal);
-      if (this.eventHandlerLeader) this.eventHandlerLeader.shutdown(signal);
+      if (this.updSource) this.updSource.shutdown(signal);
+      if (this.updIngestor) this.updIngestor.shutdown(signal);
+      if (this.updHandlerCallback) this.updHandlerCallback.shutdown(signal);
+      if (this.updHandlerLeader) this.updHandlerLeader.shutdown(signal);
     } catch (error) {
       this.logger.error(
         `Failed to properly shut down all Services \n${error}`,
