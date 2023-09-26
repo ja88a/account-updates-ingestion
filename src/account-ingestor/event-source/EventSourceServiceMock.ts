@@ -125,7 +125,7 @@ export class EventSourceServiceMock
       })
       .catch((error) => {
         throw new Error(
-          `Failed to load events from mock data file '${this.jsonMockFileUrl}' ${error}`
+          `Failed to load events from mock data file '${this.jsonMockFileUrl}' ${error}`,
         );
       });
   }

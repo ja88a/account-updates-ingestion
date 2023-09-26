@@ -146,7 +146,10 @@ export class AccountIngestorController {
       this.updIngestor.init();
       this.updSource.init();
     } catch (error) {
-      this.logger.error(`Failed to init services. Stopping the app \n${error}`, error);
+      this.logger.error(
+        `Failed to init services. Stopping the app \n${error}`,
+        error,
+      );
       await this.onApplicationShutdown(EProcessExitSignal.INIT_FAIL);
       return;
     }
@@ -186,14 +189,13 @@ export class AccountIngestorController {
    * as well as having them handled for their indexation
    */
   private start(): void {
-    this.logger.info(
-      'Start the casting & ingestion of Account Update events',
-    );
+    this.logger.info('Start the casting & ingestion of Account Update events');
 
     // Launch the casting of Account Update events
     this.updSource.startImportingUpdates().catch(async (error: Error) => {
       this.logger.error(
-        `Events Sourcing service failed to start monitoring for events. Stopping the app\n${error}`, error
+        `Events Sourcing service failed to start monitoring for events. Stopping the app\n${error}`,
+        error,
       );
       await this.onApplicationShutdown(EProcessExitSignal.INIT_FAIL);
     });
