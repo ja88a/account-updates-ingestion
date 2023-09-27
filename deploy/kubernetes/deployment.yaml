@@ -1,0 +1,30 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: account-ingestor
+  labels:
+    app: account-ingestor
+spec:
+  clusterIP: None
+  selector:
+    app: account-ingestor
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: account-ingestor
+  labels:
+    app: account-ingestor
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: account-ingestor
+  template:
+    metadata:
+      labels:
+        app: account-ingestor
+    spec:
+      containers:
+      - name: account-ingestor
+        image: account-ingestor

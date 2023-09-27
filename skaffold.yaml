@@ -1,0 +1,12 @@
+apiVersion: skaffold/v4beta6
+kind: Config
+metadata:
+  name: account-ingestor
+build:
+  artifacts:
+    - image: account-ingestor
+      docker:
+        dockerfile: deploy/docker/Dockerfile
+manifests:
+  rawYaml:
+    - deploy/kubernetes/deployment.yaml
