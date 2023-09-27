@@ -20,7 +20,7 @@ RUN npm ci
 COPY --chown=node:node . .
 
 # Use the node user from the image (instead of the root user)
-USER node
+#USER node
 
 ###################
 # BUILD FOR PRODUCTION
@@ -37,11 +37,11 @@ COPY --chown=node:node --from=development /usr/src/app/node_modules ./node_modul
 
 COPY --chown=node:node . .
 
-# Run the build command which creates the production bundle
-RUN npm run build
-
 # Set NODE_ENV environment variable
 ENV NODE_ENV production
+
+# Run the build command which creates the production bundle
+RUN npm run build
 
 # Initial `npm pkg delete scripts.prepare` fixes the need for dev tools dependency such as husky
 RUN npm pkg delete scripts.prepare
@@ -53,13 +53,16 @@ RUN npm ci --omit=dev
 
 RUN npm cache clean --force
 
-USER node
-
 ###################
 # PRODUCTION
 ###################
 
 FROM node:18-alpine As production
+
+# Set NODE_ENV environment variable: kept to 'development' just to keep displaying console logs
+ENV NODE_ENV development
+
+WORKDIR /usr/src/app
 
 # Copy the bundled code from the build stage to the production image
 COPY --chown=node:node --from=build /usr/src/app/node_modules ./node_modules
@@ -68,8 +71,11 @@ COPY --chown=node:node --from=build /usr/src/app/dist ./dist
 # Resources specific to this project, for runnning a static web server
 COPY --chown=node:node --from=build /usr/src/app/static ./static
 
-# Set NODE_ENV environment variable: kept to 'development' just to keep displaying console logs
-ENV NODE_ENV development
+# Create the logs dir, accessible to the user 'node'
+RUN mkdir -p logs && chown node:node logs
+
+# Ensure the Node process will run under the user 'node'
+USER node
 
 # Optional specification of the port to expose
 EXPOSE 3000
