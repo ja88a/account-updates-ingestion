@@ -164,23 +164,35 @@ $ pnpm docker:cleanup
 
 ## Monitoring
 
+An overview of the modules composing the app server, their exposed APIs and the main tools used for monitoing the app health via metrics:
+
+![Integrations diagram overview](./static/diag/arch-overview_diag03w.png)
+
 Default app server API URLs are 
-* `http://localhost:3000/api/v1/metrics` for metrics 
+* `http://localhost:3000/api/v1/metrics` for the Prometheus metrics (Prom format)
 
-* `http://localhost:3000/api/v1/health` for the healthcheck
+* `http://localhost:3000/api/v1/health` for the Nodejs healthcheck, based on Nodejs-Terminus (JSON)
 
-### Monitoring Stack
+### Stack
 
 You can use Docker Compose to quickly launch the app server along with a [Prometheus](https://promotheus.io) & a [Grafana](https://grafana.com) nodes.
 
 Run the Node.js app, Prometheus (+ node-exporter) and Grafana containers locally:
 ```bash
-docker compose up
+# Deploy and run the containers using docker compose
+docker compose up -f deploy/docker/docker-compose.yml
+
+# Deploy and run using docker compose based on the npm script
+pnpm docker:compose:up
 ```
 
 Alternatively, use the npm script that comes with default cleanup options:
 ```bash
-npm run docker:compose:up
+# Stop the containers using docker compose
+npm run docker:compose:up -f deploy/docker/docker-compose.yml
+
+# Stop the containers using docker compose based on the npm script
+pnpm docker:compose:down
 ```
 
 ### Prometheus
@@ -209,7 +221,7 @@ Grafana Web UI: [localhost:3000](http://localhost:3000) using Docker Compose, or
 
 ### Docker Swarm Deployment
 
-A more advanced stack supported by [Docker Swarm](https://docs.docker.com/engine/swarm/) is introduced.
+A more advanced stack supported by [Docker Swarm](https://docs.docker.com/engine/swarm/) is provided.
 
 Its purpose is to:
 * Proxyfy the http accesses to the Docker containers
@@ -238,7 +250,7 @@ The Docker Swarm configuration is available in [docker-stack-monitor.yml](./dock
 Docker Swarm stack instructions:
 ```bash
 # Docker CLI for deploying the stack / services
-docker stack deploy -c docker-stack-monitor.yml <stack_name>
+docker stack deploy -c deploy/docker/docker-stack-monitor.yml <stack_name>
 
 # Deploy the services using the npm script
 pnpm docker:stack:deploy
@@ -265,7 +277,7 @@ Actual system has been divided into 3 main service area (and corresponding servi
 
 ### Modules & Services
 
-![Architecture diagram overview](./static/diag/arch-overview_diag01w.png)
+![Architecture diagram overview](./static/diag/arch-overview_diag01w-ext.png)
 
 One main application module has been considered on top of 3 main types of services:
 
@@ -274,7 +286,7 @@ One main application module has been considered on top of 3 main types of servic
     * Binding the services together by registering services or callbacks among each other
     * Exposing a REST API for reporting the application status and service info to remote clients
 
-    Application Controller implementation: [app.controller.ts](./src/account-ingestor/app.controller.ts)
+    Application Controller implementation: [ingestor.controller.ts](./src/account-ingestor/ingestor.controller.ts)
 
 2. Service **Data Source Handler**: An adaptor responsible for monitoring (pulling/listening) an external source of events, validating these inputs and reporting them internally for their ingestion by the system.
     
