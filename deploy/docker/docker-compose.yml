@@ -12,7 +12,7 @@ services:
   prometheus:
     image: prom/prometheus:v2.47.0
     volumes:
-      - ./monitoring/prometheus/:/etc/prometheus/:ro
+      - ./monitor/prometheus/:/etc/prometheus/:ro
       - prometheus_data:/prometheus:rw
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
@@ -79,10 +79,10 @@ services:
     links:
       - prometheus:prometheus
     volumes:
-      - ./monitoring/grafana/provisioning/:/etc/grafana/provisioning/:ro
+      - ./monitor/grafana/provisioning/:/etc/grafana/provisioning/:ro
       - grafana_data:/var/lib/grafana:rw
     env_file:
-      - ./monitoring/grafana/config.monitoring
+      - ./monitor/grafana/config.monitoring
     ports:
       - '3000:3000'
     networks:

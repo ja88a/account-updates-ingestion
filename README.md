@@ -201,7 +201,7 @@ An open-source monitoring system with a dimensional data model, flexible query l
 
 Refer to the product Web site: [promotheus.io](https://promotheus.io)
 
-The Prometheus main configuration is available in [promotheus.yml](./monitoring/prometheus/prometheus.yml)
+The Prometheus main configuration is available in [promotheus.yml](./monitor/prometheus/prometheus.yml)
 
 The Promotheus Web UI is available at [localhost:9090](http://localhost:9090), using Docker Compose, or [promotheus.localhost](http://promotheus.localhost) using Docker Swarm.
 
@@ -212,12 +212,12 @@ Grafana is the open source analytics & monitoring solution for every database.
 Refer to the product Web site: [grafana.com](https://grafana.com)
 
 Grafana main configurations:
-* General [monitoring config](./monitoring/grafana/config.monitoring)
-* Provisioning [Data Sources](./monitoring/grafana/provisioning/datasources/datasource.yml)
-* Provisioning [Dashboards](./monitoring/grafana/provisioning/dashboards/)
+* General [monitoring config](./monitor/grafana/config.monitoring)
+* Provisioning [Data Sources](./monitor/grafana/provisioning/datasources/datasource.yml)
+* Provisioning [Dashboards](./monitor/grafana/provisioning/dashboards/)
 
 Grafana Web UI: [localhost:3000](http://localhost:3000) using Docker Compose, or [grafana.localhost](http://grafana.localhost) using Docker Swarm.
-  Default user is `admin`, see the enironment [config](./monitoring/grafana/config.monitoring) file.
+  Default user is `admin`, see the enironment [config](./monitor/grafana/config.monitoring) file.
 
 ### Docker Swarm Deployment
 
@@ -343,7 +343,7 @@ In order to schedule/delay an async action (e.g. casting next account update eve
 
 #### Validating
 
-A Code-as-Schema approach has been opted to validate and filter out problematic account update events. The implemented technique is based on [class-validator](https://www.npmjs.com/package/class-validator). Fields and values are checked per the constrained implemented for example in [account-update.dto.ts](./src/account-ingestor/data/account-update.dto.ts).
+A Code-as-Schema approach has been opted to validate and filter out problematic account update events. The implemented technique is based on [class-validator](https://www.npmjs.com/package/class-validator). Fields and values are checked per the constrains on fields & values, as implemented for example in [account-update.dto.ts](./src/account-ingestor/data/account-update.dto.ts).
 
 
 ### Technical considerations
