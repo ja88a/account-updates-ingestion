@@ -23,8 +23,5 @@ async function bootstrap() {
   // Start the app
   const port = process.env.PORT || MS_CONFIG.PORT_EXPOSED;
   await app.listen(port);
-  // await app.listen(port, () => {
-  //   Logger.log('Listening at http://localhost:' + port + '/' + MS_CONFIG.URI_DOMAIN_API);
-  // });
 }
 bootstrap();

@@ -58,7 +58,7 @@ services:
   prometheus:
     image: prom/prometheus:v2.47.0
     volumes:
-      - ./monitoring/prometheus/:/etc/prometheus/:ro
+      - ./monitor/prometheus/:/etc/prometheus/:ro
       - prometheus_data:/prometheus:rw
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
@@ -104,7 +104,7 @@ services:
     ports:
       - 9093:9093
     volumes:
-      - './monitoring/alertmanager/:/etc/alertmanager/'
+      - './monitor/alertmanager/:/etc/alertmanager/'
     networks:
       - monitor-net
     command:
@@ -151,9 +151,9 @@ services:
       - prometheus
     volumes:
       - grafana_data:/var/lib/grafana:rw
-      - ./monitoring/grafana/provisioning/:/etc/grafana/provisioning/:ro
+      - ./monitor/grafana/provisioning/:/etc/grafana/provisioning/:ro
     env_file:
-      - ./monitoring/grafana/config.monitoring
+      - ./monitor/grafana/config.monitoring
     networks:
       - monitor-net
     user: '472'
