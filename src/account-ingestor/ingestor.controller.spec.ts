@@ -62,7 +62,7 @@ describe('AppController', () => {
   describe('Iniating the app module', () => {
     it('should init all services smoothly', () => {
       appController.onModuleInit().catch((error) => {
-        fail('No error is expected but: ' + error);
+        fail('No error on module init is expected but: ' + error);
       });
     });
   });
