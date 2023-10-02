@@ -298,7 +298,7 @@ One main application module has been considered on top of 3 main types of servic
 
     For the events sourcing emulator, refer to [EventSourceServiceMock](./src/account-ingestor/event-source/EventSourceServiceMock.ts)
 
-3. Service **Events Ingestor**: A service registering its event-specific callback(s) to a data source handler to ingest imported events data.
+3. Service **Events Ingestor**: A service registering its event-specific callback(s) to a data source handler to ingest imported account update data.
 
     Actual implementation has a handler specific to events of type 'account updates', emitted by the data source handler, in order to ingest them.
 
@@ -308,9 +308,9 @@ One main application module has been considered on top of 3 main types of servic
 
     Account Update Ingestor implementation: refer to [AccountUpdateIngestor](./src/account-ingestor/event-ingestor/AccountUpdateIngestor.ts)
 
-4. Service **Events Handler**: Services responsible for performing specific handling of ingested event, per their type & info.
+4. Service **Events Handler**: Services responsible for performing specific handling of ingested account updates, per their type & info.
 
-    The event handler services are registered to a given events ingestor service in order for their async processing to be triggered on the ingestion of new events.
+    The update handler services are registered to a given events ingestor service in order for their async processing to be triggered on the ingestion of new events.
 
     2 implementations of this service type are available:
     * one dedicated to triggering callbacks, which expiration time is expressed by the Account Update events
