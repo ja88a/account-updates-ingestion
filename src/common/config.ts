@@ -24,7 +24,12 @@ export const MS_CONFIG = {
   /**
    * Specify if the server app should automatically shutdown by default, when the service gets inactive
    */
-  EXIT_ON_STOP: true,
+  EXIT_ON_STOP: false,
+
+  /**
+   * Publish or not (`false`) the OpenAPI REST API specifications
+   */
+  OPENAPI_PUBLISH: true,
 };
 
 /**
@@ -87,4 +92,4 @@ export enum EProcessExitSignal {
 /**
  * Max duration expressed in milliseconds to wait for shutting down the app
  */
-export const EXIT_MAX_WAIT_MS: number = 10000;
+export const EXIT_MAX_WAIT_MS: number = 10_000;
