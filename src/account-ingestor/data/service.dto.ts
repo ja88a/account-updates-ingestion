@@ -72,6 +72,9 @@ export class AccountTypeTokenOwners {
   accounts: AccountToken[];
 }
 
+/**
+ * A start time for an account in a given state
+ */
 export class AccountTime {
   /** Unique ID of the account */
   @IsOptional()
@@ -88,7 +91,7 @@ export class AccountTime {
 }
 
 /**
- *
+ * A start and end time range for an account in a given state
  */
 export class AccountTimeRange extends AccountTime {
   /** Range End time, expressed in Ms */
@@ -105,6 +108,22 @@ export class AccountTypeTopTokenOwnerHistory {
   /** Account type */
   type: string;
 
-  /** List of the account top owners over time */
+  /** List of the accounts owning the most tokens over time */
   history: AccountTime[];
+}
+
+/**
+ * Data set reporting about the service status dedicated to
+ * handling the callbacks on ingested account updates
+ */
+export class AccountHandlerCallbackStatus {
+  /** The number of callbacks left, still pending to be triggered */
+  @IsDefined()
+  @IsNumber()
+  @Min(0)
+  callbacks!: number;
+
+  /** Accounts ID from which a still pending callback has been initiated */
+  @IsArray()
+  accounts!: string[];
 }

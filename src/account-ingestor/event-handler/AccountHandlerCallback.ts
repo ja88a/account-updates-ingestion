@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { IEventHandlerService } from './IEventHandlerService';
 import AService from '../common/service/AService';
 import { AccountUpdate } from '../data/account-update.dto';
+import { AccountHandlerCallbackStatus } from '../data/service.dto';
 
 /**
  * Account Updates' callback manager.
@@ -61,11 +62,10 @@ export class AccountHandlerCallback
   /**
    * Report a status on the number of active/pending callbacks and the list of related AccountUpdate ID
    *
-   * @see {@link IService.reportStatus}
    * @override {@link AService.reportStatus}
    * @returns The number of active/pending `callbacks` and the ID of their associated source Account in `accounts`
    */
-  reportStatus(): { callbacks: number; accounts: string[] } {
+  reportStatus(): AccountHandlerCallbackStatus {
     const report = {
       callbacks: this.callbackTimeout.size,
       accounts: [...this.callbackTimeout.keys()],
