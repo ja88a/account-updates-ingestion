@@ -94,16 +94,6 @@ $ pnpm test:cov
 $ pnpm test:e2e
 ```
 
-### TS Code Documentation
-The application JS/TypeSript Code documentation can be generated on demand:
-```bash
-# Generate a Typedoc documentation
-$ pnpm doc
-```
-
-The generated Web doc is then available in the sub-directory `./docs`.
-
-
 ### Docker Integration
 
 [Docker](https://docker.com) is used here for releasing a production-ready app.
@@ -162,6 +152,42 @@ Clean up your local Docker image & container registry:
 $ pnpm docker:cleanup
 ```
 
+
+## Documentation
+
+### TS Code Documentation
+
+The application's complete TypeSript Code documentation can be generated on demand:
+```bash
+# Generate a Typedoc documentation
+$ pnpm doc
+```
+
+This solution is based on [Typedoc](https://typedoc.org/).
+
+The generated Web doc is then available in the sub-directory `./docs`.
+
+Screenshot of the generated TS Doc:
+
+![Typedoc doc screenshot](./static/screenshot/tsdoc_controller.png)
+
+### OpenAPI Documentation
+
+OpenAPI OAS 3.0 specifications of the app controllers' exposed REST APIs are made available.
+
+This documentation solution is based on [@nestjs/swagger](https://www.npmjs.com/package/@nestjs/swagger).
+
+The publication of the OpenAPI specifications can be enabled or disabled based on the config parameter `MS_CONFIG.OPENAPI_PUBLISH` set in [common/config](./src/common/config.ts).
+
+The Swagger Web doc is available at the URI [/api](http://localhost:3000/api)
+
+The Swagger JSON is available at the URI [/api-json](http://localhost:3000/api-json)
+
+Screenshot of the generated Swagger Doc:
+
+![Swagger doc screenshot](./static/screenshot/swagger-doc.png)
+
+
 ## Monitoring
 
 An overview of the modules composing the app server, their exposed APIs and the main tools used for monitoing the app health via metrics:
@@ -217,7 +243,13 @@ Grafana main configurations:
 * Provisioning [Dashboards](./monitor/grafana/provisioning/dashboards/)
 
 Grafana Web UI: [localhost:3000](http://localhost:3000) using Docker Compose, or [grafana.localhost](http://grafana.localhost) using Docker Swarm.
-  Default user is `admin`, see the enironment [config](./monitor/grafana/config.monitoring) file.
+
+Default user is `admin`, see the environment [config](./monitor/grafana/config.monitoring) file.
+
+Screenshot of the Grafana monitoring dashboard:
+
+![Grafana dasboard screenshot](./static/screenshot/grafana-firefox_0alert.png)
+
 
 ### Docker Swarm Deployment
 
@@ -262,7 +294,9 @@ docker stack rm <stack_name>
 pnpm docker:stack:rm
 ```
 
+
 ## Server App Architecture
+
 ### Key drivers
 
 While this is a demo application, the design of this app meets the following fundamentals:
@@ -463,10 +497,6 @@ Screenshots of the console output when running the app using `docker:run`
 
 ![Console screenshot docker:run](./static/screenshot/console_docker-run.png)
 ![Console screenshot: processing done](./static/screenshot/console_process-done.png)
-
-Screenshot of the Grafana monitoring dashboard:
-
-![Grafana dasboard screenshot](./static/screenshot/grafana-firefox_0alert.png)
 
 
 ## License
