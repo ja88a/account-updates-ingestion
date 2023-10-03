@@ -47,7 +47,7 @@ export abstract class BaseHealthIndicator extends HealthIndicator {
       );
       this.metricsRegistered = true;
       const histogram: PrometheusHistogram =
-        this.promClientService.registerMetrics(
+        this.promClientService.registerMetricsHistogram(
           this.name,
           this.help,
           this.labelNames,
@@ -64,7 +64,10 @@ export abstract class BaseHealthIndicator extends HealthIndicator {
     if (this.promClientService) {
       this.logger.info('Register metrics gauge for: ' + this.name, TAG, true);
       this.gaugesRegistered = true;
-      this.gauge = this.promClientService.registerGauge(this.name, this.help);
+      this.gauge = this.promClientService.registerMetricsGauge(
+        this.name,
+        this.help,
+      );
     }
   }
 

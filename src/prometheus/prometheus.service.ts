@@ -14,7 +14,9 @@ interface IMapGauge {
 /**
  * Adaptor to provide Prometheus compliant metrics.
  *
- * It consists in a registry of metrics
+ * It consists in a registry of metrics.
+ *
+ * Supported types are: Histogram & Gauge
  */
 @Injectable()
 export class PrometheusService {
@@ -35,19 +37,23 @@ export class PrometheusService {
     });
   }
 
+  /**
+   * Retrieve the actual list of metrics that are registered
+   * @returns the list of registered metrics
+   */
   public metrics(): Promise<string> {
     return this.registry.metrics();
   }
 
   /**
-   *
+   * New metrics registration, of type Histogram
    * @param name Metrics name
    * @param help Info about the metrics
    * @param labelNames Labels associated to the metrics
    * @param buckets List of buckets for the metrics
    * @returns the [newly] registered histogram metrics
    */
-  public registerMetrics(
+  public registerMetricsHistogram(
     name: string,
     help: string,
     labelNames: string[],
@@ -61,7 +67,13 @@ export class PrometheusService {
     return this.registeredMetrics[name];
   }
 
-  public registerGauge(name: string, help: string): Gauge<string> {
+  /**
+   * New metrics registration, of type Gauge
+   * @param name Metrics name
+   * @param help Info about the metrics
+   * @returns the [newly] registered Gauge metrics
+   */
+  public registerMetricsGauge(name: string, help: string): Gauge<string> {
     if (this.registeredGauges[name] === undefined) {
       const gauge = (this.registeredGauges[name] = new Gauge({
         name: this.servicePrefix + name,
@@ -73,10 +85,19 @@ export class PrometheusService {
     return this.registeredGauges[name];
   }
 
+  /**
+   * Remove a metrics from the registry, based on its name
+   * @param name Target name of the metrics to remove
+   * @returns nothing
+   */
   public removeSingleMetric(name: string): void {
     return this.registry.removeSingleMetric(name);
   }
 
+  /**
+   * Flush out all registered metrics
+   * @returns nothing
+   */
   public clearMetrics(): void {
     this.registry.resetMetrics();
     return this.registry.clear();
