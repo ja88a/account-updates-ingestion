@@ -16,7 +16,15 @@ export interface IEventIngestorService extends IService {
 
   /**
    * Handling method for ingesting new account update events
+   *
    * @param accountEvent New account update event to be ingested
    */
   ingestAccountUpdate(accountEvent: AccountUpdate): Promise<void>;
+
+  /**
+   * Flush out all actually indexed Account Update that the service has registered so far.
+   *
+   * @returns The list of all indexed account updates
+   */
+  flushOutAccountUpdates(): AccountUpdate[];
 }

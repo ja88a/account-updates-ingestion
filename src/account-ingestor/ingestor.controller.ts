@@ -8,12 +8,7 @@ import {
   EXIT_MAX_WAIT_MS,
   MS_CONFIG,
 } from '../common/config';
-import {
-  AccountTimeRange,
-  AccountTypeTokenOwners,
-  AccountTypeTopTokenOwnerHistory,
-  ServiceStatusEvent,
-} from './data/service.dto';
+import { AccountTimeRange, ServiceStatusEvent } from './data/service.dto';
 import { AccountHandlerCallback } from './event-handler/AccountHandlerCallback';
 import { AccountHandlerTokenLeaders } from './event-handler/AccountHandlerTokenLeaders';
 import { AccountUpdateIngestor } from './event-ingestor/AccountUpdateIngestor';
@@ -22,7 +17,9 @@ import {
   EventSourceServiceMock,
 } from './event-source/EventSourceServiceMock';
 import { EEventName } from './event-source/constants';
-import { AccountUpdate } from './data/account-update.dto';
+import { EAccountType } from './data/account-update.dto';
+import { ApiParam, ApiTags } from '@nestjs/swagger/dist/decorators';
+import { OutputAppStates } from './data/rest-api.dto';
 
 /**
  * Main controller of the application, responsible for the binding of available services
@@ -30,6 +27,7 @@ import { AccountUpdate } from './data/account-update.dto';
  *
  * A minimal REST API is exposed: http-json
  */
+@ApiTags('Account Ingestor')
 @Controller({
   version: MS_CONFIG.VERSION_PUBLIC,
   path: '',
@@ -43,7 +41,7 @@ export class AccountIngestorController {
   /**
    * Default App's main module constructor
    *
-   * Benefits from nestjs module's injections @see app.module
+   * Benefits from nestjs modules' injection @see {@link AccountIngestorModule}
    */
   constructor(
     private readonly appService: AccountIngestorService,
@@ -53,8 +51,12 @@ export class AccountIngestorController {
     private readonly updHandlerLeader: AccountHandlerTokenLeaders,
   ) {}
 
+  /// =================================================================
+  /// == Controller main REST APIs
+  /// ============================
+
   /**
-   * Simple ping service for basic monitoring of the app availability
+   * Simple ping service for basic monitoring of the app's online availability
    * @returns `200` http response code & `true` if the app is running
    */
   @Get('/ping')
@@ -63,19 +65,12 @@ export class AccountIngestorController {
   }
 
   /**
-   * Retrieve a complete snapshot of this app status
+   * Retrieve a complete snapshot of the app services' states
    * @returns the actually indexed `accounts`, accounts that own
    * the max tokens (`leaderboard`) and the number of callbacks `pending` to be triggered with the associated source accounts
    */
   @Get('/status')
-  getStatus(): {
-    accounts: AccountUpdate[];
-    maxtokens: {
-      leaderboard: AccountTypeTokenOwners[];
-      history: AccountTypeTopTokenOwnerHistory[];
-    };
-    pending: any;
-  } {
+  getStatus(): OutputAppStates {
     return {
       accounts: this.updIngestor.reportStatus(),
       maxtokens: this.updHandlerLeader.reportStatus(),
@@ -90,18 +85,32 @@ export class AccountIngestorController {
    * Note: the provided account types must be known in advance, else dynamically discovered.
    * @returns a list of account types with their associated top token owners
    */
-  @Get('/leaderboard')
+  @Get('/accounts/leaderboard')
   getLeaderboard(): any {
     return this.updHandlerLeader.reportLeaderboard();
   }
 
   /**
    * Retrieve the account that owned the max number of token at a given time
-   * @param accountType The type of the account. Refer to {@link EAccountType} for a list of official ones
+   * @param accountType The type of the account. Refer to {@link EAccountType} for a list of the officially supported ones
    * @param timems The timestamp expressed in ms: Unix epoch time
    * @return The account ID, if any is known at that time, as well as the time range during which the account was the top tokens owner
    */
-  @Get('/accounts/tokenmaxowner/:accountType/:time')
+  @Get('/accounts/maxhodler/:accountType/:time')
+  @ApiParam({
+    name: 'accountType',
+    required: true,
+    description: 'The target type of accounts to retrieve',
+    type: 'string',
+    enum: EAccountType,
+  })
+  @ApiParam({
+    name: 'time',
+    required: true,
+    description: 'The timestamp expressed in ms: Unix epoch time',
+    type: 'number',
+    example: Date.now() + 10_000,
+  })
   getAccountWithMaxTokens(
     @Param('accountType') accountType: string,
     @Param('time') timems: number,
@@ -110,12 +119,13 @@ export class AccountIngestorController {
   }
 
   /**
-   * Enable to restart the casting of mock events' data
+   * Start a new casting session of the mocked account updates
    * @returns none
    */
-  @Put('/recast')
-  recast(): void {
-    return this.start();
+  @Put('/mock/recast')
+  recast(): Promise<void> {
+    this.updIngestor.flushOutAccountUpdates();
+    return this.updSource.startImportingUpdates();
   }
 
   /**
@@ -128,6 +138,8 @@ export class AccountIngestorController {
   }
 
   /// =================================================================
+  /// Services Management & App Lifecycle
+  /// ===================================
 
   /**
    * Default init method for the App and its services
@@ -233,15 +245,16 @@ export class AccountIngestorController {
    * @param signal Specification of the process exit signal, required only if app is expected to shutdown
    * @param startTime Optional specification of the waiting process start time
    */
-  private async waitUntilAllCallbacksLeftTigger(
+  private async waitUntilAllCallbacksLeftTrigger(
     signal: string,
     startTime: number | undefined = Date.now(),
   ): Promise<void> {
     // Make sure the waiting period is not too long
     const actualTime = Date.now();
+    // Check if it takes too long or if we keep waiting
     const keepWaiting = startTime + EXIT_MAX_WAIT_MS > actualTime;
 
-    // Get the info about pending callbacks
+    // Get the actual pending callbacks
     const callbacksStatus = this.updHandlerCallback.reportStatus();
 
     this.logger.debug(
@@ -253,12 +266,12 @@ export class AccountIngestorController {
     if (keepWaiting && callbacksStatus.callbacks > 0) {
       // Delay the call for checking again if there are still pending callback triggers
       await new Promise((resolve) => setTimeout(resolve, 500));
-      await this.waitUntilAllCallbacksLeftTigger(signal, startTime);
+      await this.waitUntilAllCallbacksLeftTrigger(signal, startTime);
     }
   }
 
   /**
-   * Stop the app: stop the app services
+   * Stop the app services
    */
   private async stop(): Promise<void> {
     // Stop feeding the ingestor with external inputs
@@ -282,9 +295,9 @@ export class AccountIngestorController {
     }
 
     // Wait for all pending callbacks to be triggered before leaving
-    await this.waitUntilAllCallbacksLeftTigger(signal);
+    await this.waitUntilAllCallbacksLeftTrigger(signal);
 
-    // Report the biggest tokens' owner per account type
+    // DEMO - Report the biggest tokens' owner per account type, before leaving
     const tokenLeaderSatus = this.updHandlerLeader.reportStatus().leaderboard;
     let textReport = '';
     tokenLeaderSatus.forEach((entry) => {
@@ -295,7 +308,7 @@ export class AccountIngestorController {
     if (tokenLeaderSatus.length > 0)
       this.logger.info(`Max tokens holder, per account type:\n${textReport}`);
 
-    // Shutdown them all
+    // Shut them all down
     try {
       if (this.updSource) this.updSource.shutdown(signal);
       if (this.updIngestor) this.updIngestor.shutdown(signal);

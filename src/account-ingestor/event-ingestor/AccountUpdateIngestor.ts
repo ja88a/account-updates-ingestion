@@ -25,10 +25,22 @@ export class AccountUpdateIngestor
   implements IEventIngestorService
 {
   /** Indexed account updates. A map of `account.id` towards their most up-to-date update dataset */
-  private accounts: Map<string, AccountUpdate> = new Map();
+  private accountsLastUpdate: Map<string, AccountUpdate> = new Map();
 
-  /** A list of registered account update handlers */
-  private updateHandlers: IEventHandlerService[] = [];
+  /** A list of registered account update handlers, to be triggered on each newly ingested/indexed account update */
+  private accountUpdateHandlers: IEventHandlerService[] = [];
+
+  /**
+   * @see {@link IEventIngestorService.registerAccountUpdateHandler}
+   */
+  registerAccountUpdateHandler(service: IEventHandlerService): void {
+    if (service == undefined)
+      throw new Error(
+        `Attempt to register an undefined account update handler`,
+      );
+
+    this.accountUpdateHandlers.push(service);
+  }
 
   /**
    * Indexing of the account update.
@@ -52,13 +64,13 @@ export class AccountUpdateIngestor
     }
 
     // Check if already indexed, if so compare the versions to keep the latest only
-    const indexedAccountUpdate = this.accounts.get(accountEvent.id);
+    const indexedAccountUpdate = this.accountsLastUpdate.get(accountEvent.id);
     if (
       indexedAccountUpdate == undefined ||
       accountEvent.version > indexedAccountUpdate.version
     ) {
       // Register / Ingest latest update version
-      this.accounts.set(accountEvent.id, accountEvent);
+      this.accountsLastUpdate.set(accountEvent.id, accountEvent);
       this.logger.info(
         `Indexing Update v${accountEvent.version} for ${accountEvent.id}`,
       );
@@ -72,38 +84,35 @@ export class AccountUpdateIngestor
    * @param accountUpd the account update to be passed to registered handlers
    */
   triggerAccountUpdateHandling(accountUpd: AccountUpdate) {
-    this.updateHandlers.forEach((handler) => {
+    this.accountUpdateHandlers.forEach((handler) => {
       handler.processAccountUpdate(accountUpd);
     });
   }
 
   /**
-   * @see {@link IEventIngestorService.registerAccountUpdateHandler}
-   */
-  registerAccountUpdateHandler(service: IEventHandlerService): void {
-    if (service == undefined)
-      throw new Error(
-        `Attempt to register an undefined account update handler`,
-      );
-
-    this.updateHandlers.push(service);
-  }
-
-  /**
-   * @see {@link IService.reportStatus}
    * @override {@link AService.reportStatus}
    * @returns The complete list of accounts' last indexed update
    */
   reportStatus(): AccountUpdate[] {
-    return Array.from(this.accounts.values());
+    return Array.from(this.accountsLastUpdate.values());
+  }
+
+  /**
+   * @see {@link IEventIngestorService}
+   * @returns actual list of indexed account updates
+   */
+  flushOutAccountUpdates(): AccountUpdate[] {
+    const accountUpdates = Array.from(this.accountsLastUpdate.values());
+    this.accountsLastUpdate.clear();
+    return accountUpdates;
   }
 
   /**
    * @override {@link AService.shutdown}
    */
   shutdown(signal: string) {
-    this.updateHandlers = [];
-    this.accounts.clear();
+    this.accountUpdateHandlers = [];
+    this.accountsLastUpdate.clear();
     super.shutdown(signal);
   }
 }
