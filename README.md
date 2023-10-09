@@ -188,6 +188,127 @@ Screenshot of the generated Swagger Doc:
 ![Swagger doc screenshot](./static/screenshot/swagger-doc.png)
 
 
+## Server App Architecture
+
+### Key drivers
+
+While this is a demo application, the design of this app meets the following fundamentals:
+  * The service must be **evolutive**: modularity (add/remove/replace internal services without impacting others); strict minimal dependencies among components; communications through internal generic interfaces or events
+  * The service must be **scalable**: support for vertical & horizontal scaling; low CPU & memory footprint; high throuput & low response time; extensive usage of async supports and concurrency considerations
+  * The service must be **secure**: low network exposure; systematic external inputs validation; lowest trust even among internal services; clean errors management, based on exceptions propagation
+
+Actual system has been divided into 3 main service area (and corresponding service types):
+1. Handling the external source of data events
+2. Ingestion of the information, account updates here (logged onchain events), for their indexing, validation/filtering, transformation, persistence management, etc and moreover enabling their further processing by specifc handlers
+3. Handling specific processing of ingested events: triggering further handling per the event type, tracking and managing statistics, etc
+
+### Modules & Services
+
+![Architecture diagram overview](./static/diag/arch-overview_diag01w-ext.png)
+
+One main application module has been considered on top of 3 main types of services:
+
+1. **Application Controller**: Responsible for the application lifecycle and managing the main services composition and runtime.
+    * Init, start, stop & graceful shutdown management
+    * Binding the services together by registering services or callbacks among each other
+    * Exposing a REST API for reporting the application status and service info to remote clients
+
+    Application Controller implementation: [ingestor.controller.ts](./src/account-ingestor/ingestor.controller.ts)
+
+2. Service **Data Source Handler**: An adaptor responsible for monitoring (pulling/listening) an external source of events, validating these inputs and reporting them internally for their ingestion by the system.
+    
+    It can consist in a client listening to a message queuing system, or polling a DB or API (REST http / RPC).
+
+    Service interface: [IEventSourceService](./src/account-ingestor/event-source/IEventSourceService.ts)
+
+    The implemented event casting emulator fetch (http GET) a JSON file, transform and validate the account update events using a Code-as-Schema approach where the fields & values are constrained. Then the entries are scheduled to be sequentially cast through an event emitter channel, to which events listener services can subscribe their callback method to further process the data.
+
+    For the events sourcing emulator, refer to [EventSourceServiceMock](./src/account-ingestor/event-source/EventSourceServiceMock.ts)
+
+3. Service **Events Ingestor**: A service registering its event-specific callback(s) to a data source handler to ingest imported account update data.
+
+    Actual implementation has a handler specific to events of type 'account updates', emitted by the data source handler, in order to ingest them.
+
+    Events data are validated, ignored if considered as invalid (missing or unknown field or value) and then indexed in memory, while a remote persistent storage might be considered. Once an account update is ingested, the registered handlers for account updates have their dedicated callback triggered.
+
+    Service interface: [IEventIngestorService](./src/account-ingestor/event-ingestor/IEventIngestorService.ts)
+
+    Account Update Ingestor implementation: refer to [AccountUpdateIngestor](./src/account-ingestor/event-ingestor/AccountUpdateIngestor.ts)
+
+4. Service **Events Handler**: Services responsible for performing specific handling of ingested account updates, per their type & info.
+
+    The update handler services are registered to a given events ingestor service in order for their async processing to be triggered on the ingestion of new events.
+
+    2 implementations of this service type are available:
+    * one dedicated to triggering callbacks, which expiration time is expressed by the Account Update events
+    * another is dedicated to maintaining a minimum leaderboard/tracking of the accounts owning the most tokens, grouped per account types
+
+    Service interface: [IEventHandlerService](./src/account-ingestor/event-handler/IEventHandlerService.ts)
+    
+    Account Update Handler for Callbacks: [AccountHandlerCallback](./src/account-ingestor/event-handler/AccountHandlerCallback.ts)
+        
+    Account Update Handler for tracking accounts' max tokens holding: [AccountHandlerTokenLeaders](./src/account-ingestor/event-handler/AccountHandlerTokenLeaders.ts)
+
+
+### Design patterns
+
+The general adopted pattern is a controller-services approach for this simple app.
+
+The project structure allows setting clear boundaries among each components scope and dependencies. Moreover extracting the actual 4 services into separate and autonomous full modules (having their own controller, exposed RPC API, etc) is made easily possible.
+
+#### Service binding
+
+To lower down the dependency among services, they don't communicate directly to each other. Instead the listeners callback are registered to the triggerer. This binding of services (handler's callback registration) is performed by the app controller. 2 mains types have been implemented:
+* EventEmitter-based technique for Ingestors to register their callback to be triggered on a given event name
+* Interface method direct registration for Events handlers callback to be triggered by Ingestor services compatible with the event type (payload)
+
+Refer to the operated binding of services in [AppController.bindServices()](./src/account-ingestor/ingestor.controller.ts).
+
+#### Delaying
+
+In order to schedule/delay an async action (e.g. casting next account update event) or to wait for a given state (e.g. wait for all callbacks to be triggered before shutting down) a Node-based Timeout technique is used.
+
+#### Validating
+
+A Code-as-Schema approach has been opted to validate and filter out problematic account update events. The implemented technique is based on [class-validator](https://www.npmjs.com/package/class-validator). 
+
+Fields and values are checked per the constrains on fields & values, as implemented for example in [account-update.dto.ts](./src/account-ingestor/data/account-update.dto.ts).
+
+#### Graceful App Shutdown
+
+All interruption signals of the app runtime is caught and a graceful shutdown implemented.
+
+First, listening to the events source is closed, then the app will wait for all account updates' related callbacks to be triggered. A maximum wait time is configurable from the setting `EXIT_MAX_WAIT_MS` in [common/config.ts](./src/common/config.ts).
+
+### Technical considerations
+
+The [Node.js](https://nodejs.org) runtime framework is used for handling a minimal server application.
+
+The [Nest.js](https://nestjs.com) development framework is used for benefiting from its modularity and the reuse of bullet-proof design patterns, reusable components and low footprint in terms of performance impact. 
+
+The underlying [Express.js](https://expressjs.com) platform has been opted, and a minimal REST API has been initiated at the application controller level. Refer to the minimal [landing page](http://localhost:3000) when the app is locally running.
+
+The TypeScript programming language is used for its type safety and general improvements over JavaScript.
+
+The testing framework is made of the [Jest.js](https://jestjs.io) & [Chai](https://www.chaijs.com/) solutions.
+
+### Production Considerations
+
+The integrated Logging technique is based on the flexible [Winston Logger](https://www.npmjs.com/package/winston). 
+
+In production mode (`NODE_ENV=production`) the console output is disabled and logs are aggregated in a JSON file, with the provided log level thresholds. The later enables a log watcher service such as Kibana or CloudWatcher to integrate these logs and define filters and alerts for a continuous monitoring.
+
+A file rollout mechanism based on time (daily), the file size or content length is implemented. Refer to [`logger.ts`](./src/common/logger.ts).
+
+As long as there is no external data persistency, current implementation stores all data in memory. This is problematic for the current account update events' ingestion service since it keeps in memory an entry for every met account. This is not scalable on a real system. Other services have limited states storage in memory, those are temporary (callback handler service) and/or limited (tokens leaderboard).
+
+Actual implementation can automatically shut down once all account update events are processed. On an actual system, a ping & status REST API should be used to check for the service availability. Else the Docker container's resources usage (CPU, memory, network usage) would have to be monitored and a scaling service such as K8s or Fargate-like, Docker Swarm is to be considered, as well as KV-based caching and event-based coordination systems among the app instances.
+
+The interesting challenge for going to production is to replace actual mock implementation to cast events by an actual external data source integration: a continuous polling or event-driven (Websocket, Event/Message Queuing), then the integration will be fun and performance considerations further challenged.
+
+Such external services would also have to be continuously monitored (external data source server, in memory caching & database): their access, availability, performance and operating costs. Actual implementation has initiated such an advanced metrics support, based on Prometheus.
+
+
 ## Monitoring
 
 An overview of the modules composing the app server, their exposed APIs and the main tools used for monitoing the app health via metrics:
@@ -294,118 +415,6 @@ docker stack rm <stack_name>
 pnpm docker:stack:rm
 ```
 
-
-## Server App Architecture
-
-### Key drivers
-
-While this is a demo application, the design of this app meets the following fundamentals:
-  * The service must be **evolutive**: modularity (add/remove/replace internal services without impacting others); strict minimal dependencies among components; communications through internal generic interfaces or events
-  * The service must be **scalable**: support for vertical & horizontal scaling; low CPU & memory footprint; high throuput & low response time; extensive usage of async supports and concurrency considerations
-  * The service must be **secure**: low network exposure; systematic external inputs validation; lowest trust even among internal services; clean errors management, based on exceptions propagation
-
-Actual system has been divided into 3 main service area (and corresponding service types):
-1. Handling the external source of data events
-2. Ingestion of the information, account updates here (logged onchain events), for their indexing, validation/filtering, transformation, persistence management, etc and moreover enabling their further processing by specifc handlers
-3. Handling specific processing of ingested events: triggering further handling per the event type, tracking and managing statistics, etc
-
-### Modules & Services
-
-![Architecture diagram overview](./static/diag/arch-overview_diag01w-ext.png)
-
-One main application module has been considered on top of 3 main types of services:
-
-1. **Application Controller**: Responsible for the application lifecycle and managing the main services composition and runtime.
-    * Init, start, stop & graceful shutdown management
-    * Binding the services together by registering services or callbacks among each other
-    * Exposing a REST API for reporting the application status and service info to remote clients
-
-    Application Controller implementation: [ingestor.controller.ts](./src/account-ingestor/ingestor.controller.ts)
-
-2. Service **Data Source Handler**: An adaptor responsible for monitoring (pulling/listening) an external source of events, validating these inputs and reporting them internally for their ingestion by the system.
-    
-    It can consist in a client listening to a message queuing system, or polling a DB or API (REST http / RPC).
-
-    Service interface: [IEventSourceService](./src/account-ingestor/event-source/IEventSourceService.ts)
-
-    The implemented event casting emulator fetch (http GET) a JSON file, transform and validate the account update events using a Code-as-Schema approach where the fields & values are constrained. Then the entries are scheduled to be sequentially cast through an event emitter channel, to which events listener services can subscribe their callback method to further process the data.
-
-    For the events sourcing emulator, refer to [EventSourceServiceMock](./src/account-ingestor/event-source/EventSourceServiceMock.ts)
-
-3. Service **Events Ingestor**: A service registering its event-specific callback(s) to a data source handler to ingest imported account update data.
-
-    Actual implementation has a handler specific to events of type 'account updates', emitted by the data source handler, in order to ingest them.
-
-    Events data are validated, ignored if considered as invalid (missing or unknown field or value) and then indexed in memory, while a remote persistent storage might be considered. Once an account update is ingested, the registered handlers for account updates have their dedicated callback triggered.
-
-    Service interface: [IEventIngestorService](./src/account-ingestor/event-ingestor/IEventIngestorService.ts)
-
-    Account Update Ingestor implementation: refer to [AccountUpdateIngestor](./src/account-ingestor/event-ingestor/AccountUpdateIngestor.ts)
-
-4. Service **Events Handler**: Services responsible for performing specific handling of ingested account updates, per their type & info.
-
-    The update handler services are registered to a given events ingestor service in order for their async processing to be triggered on the ingestion of new events.
-
-    2 implementations of this service type are available:
-    * one dedicated to triggering callbacks, which expiration time is expressed by the Account Update events
-    * another is dedicated to maintaining a minimum leaderboard/tracking of the accounts owning the most tokens, grouped per account types
-
-    Service interface: [IEventHandlerService](./src/account-ingestor/event-handler/IEventHandlerService.ts)
-    
-    Account Update Handler for Callbacks: [AccountHandlerCallback](./src/account-ingestor/event-handler/AccountHandlerCallback.ts)
-        
-    Account Update Handler for tracking accounts' max tokens holding: [AccountHandlerTokenLeaders](./src/account-ingestor/event-handler/AccountHandlerTokenLeaders.ts)
-
-
-### Design patterns
-
-The general adopted pattern is a controller-services approach for this simple app.
-
-The project structure allows setting clear boundaries among each components scope and dependencies. Moreover extracting the actual 4 services into separate and autonomous full modules (having their own controller, exposed RPC API, etc) is made easily possible.
-
-#### Service binding
-
-To lower down the dependency among services, they don't communicate directly to each other. Instead the listeners callback are registered to the triggerer. This binding of services (handler's callback registration) is performed by the app controller. 2 mains types have been implemented:
-* EventEmitter-based technique for Ingestors to register their callback to be triggered on a given event name
-* Interface method direct registration for Events handlers callback to be triggered by Ingestor services compatible with the event type (payload)
-
-Refer to the operated binding of services in [AppController.bindServices()](./src/account-ingestor/ingestor.controller.ts).
-
-#### Delaying
-
-In order to schedule/delay an async action (e.g. casting next account update event) or to wait for a given state (e.g. wait for all callbacks to be triggered before shutting down) a Node-based Timeout technique is used.
-
-#### Validating
-
-A Code-as-Schema approach has been opted to validate and filter out problematic account update events. The implemented technique is based on [class-validator](https://www.npmjs.com/package/class-validator). Fields and values are checked per the constrains on fields & values, as implemented for example in [account-update.dto.ts](./src/account-ingestor/data/account-update.dto.ts).
-
-
-### Technical considerations
-
-The [Node.js](https://nodejs.org) runtime framework is used for handling a minimal server application.
-
-The [Nest.js](https://nestjs.com) development framework is used for benefiting from its modularity and the reuse of bullet-proof design patterns, reusable components and low footprint in terms of performance impact. The underlying [Express.js](https://expressjs.com) platform has been opted, and a minimal REST API has been initiated at the application controller level. Refer to the minimal [landing page](http://localhost:3000) when the app is locally running.
-
-The TypeScript programming language is used for its type safety and general improvements over JavaScript.
-
-The testing framework is made of the [Jest.js](https://jestjs.io) & [Chai](https://www.chaijs.com/) solutions.
-
-### Production Considerations
-
-The integrated Logging technique is based on the flexible [Winston Logger](https://www.npmjs.com/package/winston). 
-
-In production mode (`NODE_ENV=production`) the console output is disabled and logs are aggregated in a JSON file, with the provided log level thresholds. The later enables a log watcher service such as Kibana or CloudWatcher to integrate these logs and define filters and alerts for a continuous monitoring.
-
-A file rollout mechanism based on time (daily), the file size or content length is implemented. Refer to [`logger.ts`](./src/common/logger.ts).
-
-As long as there is no external data persistency, current implementation stores all data in memory. This is problematic for the current account update events' ingestion service since it keeps in memory an entry for every met account. This is not scalable on a real system. Other services have limited states storage in memory, those are temporary (callback handler service) and/or limited (tokens leaderboard).
-
-Actual implementation can automatically shut down once all account update events are processed. On an actual system, a ping & status REST API should be used to check for the service availability. Else the Docker container's resources usage (CPU, memory, network usage) would have to be monitored and a scaling service such as K8s or Fargate-like, Docker Swarm is to be considered, as well as KV-based caching and event-based coordination systems among the app instances.
-
-The interesting challenge for going to production is to replace actual mock implementation to cast events by an actual external data source integration: a continuous polling or event-driven (Websocket, Event/Message Queuing), then the integration will be fun and performance considerations further challenged.
-
-Such external services would also have to be continuously monitored (external data source server, in memory caching & database): their access, availability, performance and operating costs. Actual implementation has initiated such an advanced metrics support, based on Prometheus.
-
 ## Technical Challenge
 
 Below  are the provided inputs & expectations of the technical challenge this project has been originally developped for.
@@ -465,7 +474,6 @@ version should be erased.
 
 `callbackTimeMs` - Time at which we’d like to print the contents of the account to console after it’s
 been ingested.
-
 
 #### Example scenarios
 
